@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand:       #e2701c;
+  --brand-dark:  #b04010;
+  --teal:        #14b8a6;
+  --teal-dark:   #0f766e;
+  --earth:       #a07848;
+  --radius:      0.75rem;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    @apply bg-stone-50 text-stone-900;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', sans-serif;
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  /* NiiDo Brand Buttons */
+  .btn-brand {
+    @apply bg-brand-500 hover:bg-brand-600 text-white font-semibold
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+
+  .btn-teal {
+    @apply bg-teal-500 hover:bg-teal-600 text-white font-semibold
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply border-2 border-brand-500 text-brand-600 hover:bg-brand-50
+           font-semibold px-5 py-2.5 rounded-xl transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply text-stone-600 hover:bg-stone-100 font-medium
+           px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-2xl border border-stone-200
+           shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .card-flat {
+    @apply bg-white rounded-2xl border border-stone-200;
+  }
+
+  /* Module badges */
+  .badge-read {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200;
+  }
+
+  .badge-teach {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           bg-brand-50 text-brand-700 text-xs font-semibold border border-brand-200;
+  }
+
+  .badge-pulse {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           bg-earth-50 text-earth-700 text-xs font-semibold border border-earth-200;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply card p-6 flex flex-col gap-2;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-stone-300
+           bg-white text-stone-900 placeholder:text-stone-400
+           focus:outline-none focus:ring-2 focus:ring-brand-400
+           focus:border-transparent transition-all duration-200
+           text-sm;
+  }
+
+  .label {
+    @apply text-sm font-medium text-stone-700 mb-1.5 block;
+  }
+
+  /* Sidebar */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl
+           text-stone-600 hover:bg-stone-100 hover:text-stone-900
+           font-medium text-sm transition-all duration-200 cursor-pointer;
+  }
+
+  .sidebar-link.active {
+    @apply bg-brand-50 text-brand-700 hover:bg-brand-100;
+  }
+
+  /* Track color pills */
+  .track-visual      { @apply bg-purple-100 text-purple-700 border-purple-200; }
+  .track-auditory    { @apply bg-blue-100 text-blue-700 border-blue-200; }
+  .track-kinesthetic { @apply bg-green-100 text-green-700 border-green-200; }
+  .track-readwrite   { @apply bg-amber-100 text-amber-700 border-amber-200; }
+  .track-multimodal  { @apply bg-pink-100 text-pink-700 border-pink-200; }
+}
+
+/* Assessment progress animation */
+@keyframes progress-fill {
+  from { width: 0; }
+  to   { width: var(--progress); }
+}
+
+.progress-bar {
+  animation: progress-fill 0.5s ease-out forwards;
+}
+
+/* Fade in for page transitions */
+.page-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
