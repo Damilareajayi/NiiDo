@@ -10,6 +10,7 @@ import { teachRouter }  from "./routes/teach";
 import { pulseRouter }  from "./routes/pulse";
 import { uploadRouter } from "./routes/upload";
 import { whatsappRouter } from "./routes/whatsapp";
+import "./firebase";
 
 const app  = express();
 const PORT = process.env.PORT || 4000;

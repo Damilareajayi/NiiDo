@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { AssessmentResponse, LearningTrack, Grade, Subject, Language } from "../../frontend/src/types";
+import { AssessmentResponse, LearningTrack, Grade, Subject, Language } from "../types";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });

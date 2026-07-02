@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:eduprompt.learnscape.africa)",
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(rm -rf dist)",
+      "Bash(cat next.config.mjs)",
+      "Bash(cat next-env.d.ts)",
+      "Bash(git add *)"
+    ]
+  }
+}

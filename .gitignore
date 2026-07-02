@@ -8,6 +8,7 @@ node_modules/
 dist/
 build/
 out/
+*.tsbuildinfo
 
 # Environment files — NEVER commit these
 .env
