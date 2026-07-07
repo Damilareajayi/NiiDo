@@ -1,0 +1,9 @@
+<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+  <text y="105" font-family="'Trebuchet MS','Segoe UI',Arial,sans-serif" font-size="88">
+    <tspan font-weight="700" fill="#7c3aed">nıı</tspan><tspan font-weight="300" fill="#1e0a3c">do</tspan>
+  </text>
+
+  <circle cx="67" cy="40" r="6.5" fill="#38BDF8"/>
+  <circle cx="92" cy="40" r="6.5" fill="#00A896"/>
+  <circle cx="80" cy="26" r="6.5" fill="#F43F5E"/>
+</svg>

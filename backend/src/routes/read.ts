@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { analyseAssessment } from "../services/gemini";
+import { db, Timestamp } from "../firebase";
+import { requireAuth } from "../middleware/auth";
 
 export const readRouter = Router();
 
@@ -15,12 +17,11 @@ const AnalyseSchema = z.object({
   age:        z.number().min(4).max(20),
   grade:      z.string(),
   language:   z.enum(["en", "ha", "yo", "ig"]),
-  studentId:  z.string(),
 });
 
 // POST /api/read/analyse
-// Analyse assessment responses and return LearnerDNA profile
-readRouter.post("/analyse", async (req: Request, res: Response) => {
+// Analyse assessment responses, save the LearnerDNA profile, and return it
+readRouter.post("/analyse", requireAuth, async (req: Request, res: Response) => {
   try {
     const data = AnalyseSchema.parse(req.body);
     const profile = await analyseAssessment({
@@ -29,7 +30,23 @@ readRouter.post("/analyse", async (req: Request, res: Response) => {
       grade:     data.grade as any,
       language:  data.language,
     });
-    res.json({ success: true, profile, studentId: data.studentId });
+
+    const studentId = req.authUser!.uid;
+    const completedAt = Timestamp.now();
+    await db.collection("students").doc(studentId).set({
+      name:     req.authUser!.name,
+      schoolId: req.authUser!.schoolId,
+      grade:    data.grade,
+      age:      data.age,
+      language: data.language,
+      readProfile: {
+        ...profile,
+        completedAt,
+        rawResponses: data.responses,
+      },
+    }, { merge: true });
+
+    res.json({ success: true, profile: { ...profile, completedAt }, studentId });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request data", details: err.errors });

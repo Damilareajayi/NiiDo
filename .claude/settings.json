@@ -7,7 +7,8 @@
       "Bash(rm -rf dist)",
       "Bash(cat next.config.mjs)",
       "Bash(cat next-env.d.ts)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(curl -s http://localhost:4000/health)"
     ]
   }
 }

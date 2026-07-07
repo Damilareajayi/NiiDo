@@ -1,0 +1,12 @@
+<svg viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="170" fill="white"/>
+  <text y="105" font-family="'Trebuchet MS','Segoe UI',Arial,sans-serif" font-size="88">
+    <tspan font-weight="700" fill="#7c3aed">nıı</tspan><tspan font-weight="300" fill="#1e0a3c">do</tspan>
+  </text>
+  <rect x="0" y="112" width="220" height="3" rx="1.5" fill="#7c3aed" opacity="0.2"/>
+
+  <circle cx="67" cy="40" r="6.5" fill="#38BDF8"/>
+  <circle cx="92" cy="40" r="6.5" fill="#00A896"/>
+  <circle cx="80" cy="26" r="6.5" fill="#F43F5E"/>
+  <text x="0" y="135" font-family="'Trebuchet MS','Segoe UI',Arial,sans-serif" font-size="13" fill="#7c3aed" opacity="0.5" letter-spacing="1">by LearnScape Africa</text>
+</svg>

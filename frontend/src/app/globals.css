@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --brand:       #e2701c;
-  --brand-dark:  #b04010;
-  --teal:        #14b8a6;
-  --teal-dark:   #0f766e;
-  --earth:       #a07848;
+  --brand:       #7c3aed;
+  --brand-dark:  #6d28d9;
+  --teal:        #00a896;
+  --teal-dark:   #00897a;
+  --sky:         #38bdf8;
+  --coral:       #f43f5e;
   --radius:      0.75rem;
 }
 
@@ -35,6 +36,12 @@
 
   .btn-teal {
     @apply bg-teal-500 hover:bg-teal-600 text-white font-semibold
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+
+  .btn-sky {
+    @apply bg-sky-500 hover:bg-sky-600 text-white font-semibold
            px-5 py-2.5 rounded-xl transition-all duration-200
            shadow-sm hover:shadow-md active:scale-[0.98];
   }
@@ -72,7 +79,7 @@
 
   .badge-pulse {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-           bg-earth-50 text-earth-700 text-xs font-semibold border border-earth-200;
+           bg-sky-50 text-sky-700 text-xs font-semibold border border-sky-200;
   }
 
   /* Stat card */

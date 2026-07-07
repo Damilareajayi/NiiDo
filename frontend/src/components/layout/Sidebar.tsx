@@ -55,15 +55,15 @@ export default function Sidebar() {
   const roleColor =
     user?.role === "student" ? "bg-teal-500" :
     user?.role === "teacher" ? "bg-brand-500" :
-    "bg-earth-500";
+    "bg-sky-500";
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-stone-100">
         <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl ${roleColor} flex items-center justify-center shrink-0`}>
-            <BookOpen className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-stone-900 flex items-center justify-center shrink-0">
+            <img src="/niido-icon-mark.svg" alt="" className="w-5 h-5" />
           </div>
           <div>
             <p className="font-display font-bold text-stone-900 text-lg leading-none">NiiDo</p>
@@ -88,7 +88,7 @@ export default function Sidebar() {
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium
                   ${item.badge.includes("Read")  ? "bg-teal-100 text-teal-700" :
                     item.badge.includes("Teach") ? "bg-brand-100 text-brand-700" :
-                    "bg-earth-100 text-earth-700"}`}>
+                    "bg-sky-100 text-sky-700"}`}>
                   AI
                 </span>
               )}
@@ -136,8 +136,8 @@ export default function Sidebar() {
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-xl ${roleColor} flex items-center justify-center`}>
-            <BookOpen className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-stone-900 flex items-center justify-center">
+            <img src="/niido-icon-mark.svg" alt="" className="w-4 h-4" />
           </div>
           <span className="font-display font-bold text-stone-900">NiiDo</span>
         </div>

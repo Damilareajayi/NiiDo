@@ -10,43 +10,66 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // NiiDo Brand — warm, African, trustworthy
+        // NiiDo Brand — from the official niido-brand kit, shared with EduPrompt
         brand: {
-          50:  "#fdf6ee",
-          100: "#fae8d0",
-          200: "#f5cfa0",
-          300: "#efaf65",
-          400: "#e8893a",
-          500: "#e2701c", // primary orange — energy, warmth
-          600: "#d45712",
-          700: "#b04010",
-          800: "#8c3314",
-          900: "#712c13",
-          950: "#3d1308",
+          // Primary — wordmark purple (#7c3aed), used for CTAs, active states, NiiDo Teach
+          50:  "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa", // "Purple Light" — dark-mode wordmark
+          500: "#8b5cf6",
+          600: "#7c3aed", // "EduPrompt Purple" — exact brand hex
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
+          950: "#2e1065",
         },
         teal: {
-          50:  "#f0fdfa",
-          100: "#ccfbf1",
-          200: "#99f6e4",
-          300: "#5eead4",
-          400: "#2dd4bf",
-          500: "#14b8a6", // secondary teal — calm, learning
-          600: "#0d9488",
-          700: "#0f766e",
-          800: "#115e59",
-          900: "#134e4a",
+          // Dot: growth, adaptability — used for NiiDo Read
+          50:  "#edfcf9",
+          100: "#d2f7ef",
+          200: "#a9eee0",
+          300: "#72e0cd",
+          400: "#3bcab5",
+          500: "#00a896", // exact brand hex
+          600: "#00897a",
+          700: "#036b62",
+          800: "#0a544d",
+          900: "#0b4641",
+          950: "#002e2a",
         },
-        earth: {
-          50:  "#faf7f2",
-          100: "#f0e9db",
-          200: "#dfd0b8",
-          300: "#c9b08d",
-          400: "#b38f64",
-          500: "#a07848", // earth brown — grounded, African
-          600: "#8a6339",
-          700: "#714f2f",
-          800: "#5e4129",
-          900: "#4f3724",
+        sky: {
+          // Dot: open possibility, reach — used for NiiDo Pulse
+          50:  "#f0f9ff",
+          100: "#e0f2fe",
+          200: "#bae6fd",
+          300: "#7dd3fc",
+          400: "#38bdf8", // exact brand hex
+          500: "#0ea5e9",
+          600: "#0284c7",
+          700: "#0369a1",
+          800: "#075985",
+          900: "#0c4a6e",
+          950: "#082f49",
+        },
+        coral: {
+          // Dot: energy, inclusion, neurodiversity — used for support/highlight accents
+          50:  "#fff1f2",
+          100: "#ffe4e6",
+          200: "#fecdd3",
+          300: "#fda4af",
+          400: "#fb7185",
+          500: "#f43f5e", // exact brand hex
+          600: "#e11d48",
+          700: "#be123c",
+          800: "#9f1239",
+          900: "#881337",
+          950: "#4c0519",
+        },
+        navy: {
+          // Dark backgrounds — brand's "Dark Navy"
+          DEFAULT: "#1a1a2e",
         },
       },
       fontFamily: {

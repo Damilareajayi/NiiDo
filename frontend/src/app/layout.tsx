@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   title: "NiiDo — Every child learns differently",
   description:
     "Africa's adaptive learning platform. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
-  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

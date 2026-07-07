@@ -1,16 +1,17 @@
 // ── NiiDo Pulse Route ────────────────────────────────────────
 import { Router, Request, Response } from "express";
 import { db, Timestamp } from "../firebase";
+import { requireAuth, requireRole } from "../middleware/auth";
 
 const TRACKS = ["visual", "auditory", "kinesthetic", "readwrite", "multimodal"] as const;
 
 export const pulseRouter = Router();
 
 // GET /api/pulse/school/:schoolId
-pulseRouter.get("/school/:schoolId", async (req: Request, res: Response) => {
+pulseRouter.get("/school/:schoolId", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   const { schoolId } = req.params;
-  if (!schoolId) {
-    return res.status(400).json({ error: "Missing schoolId" });
+  if (schoolId !== req.authUser!.schoolId) {
+    return res.status(403).json({ error: "Cannot view another school's data" });
   }
 
   try {

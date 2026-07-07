@@ -2,6 +2,8 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { generateLessonPlan } from "../services/gemini";
+import { db, Timestamp } from "../firebase";
+import { requireAuth, requireRole } from "../middleware/auth";
 
 export const teachRouter = Router();
 
@@ -13,11 +15,10 @@ const LessonSchema = z.object({
   trackDistribution: z.record(z.string(), z.number()).optional().default({}),
   totalStudents:     z.number().min(1).max(200).optional().default(30),
   language:          z.enum(["en", "ha", "yo", "ig"]).optional().default("en"),
-  channel:           z.enum(["web", "whatsapp"]).optional().default("web"),
 });
 
 // POST /api/teach/generate
-teachRouter.post("/generate", async (req: Request, res: Response) => {
+teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), async (req: Request, res: Response) => {
   try {
     const data = LessonSchema.parse(req.body);
     const lesson = await generateLessonPlan({
@@ -29,11 +30,26 @@ teachRouter.post("/generate", async (req: Request, res: Response) => {
       totalStudents:     data.totalStudents,
       language:          data.language,
     });
-    res.json({ success: true, lesson });
+
+    const createdAt = Timestamp.now();
+    const docRef = await db.collection("lessons").add({
+      teacherId:        req.authUser!.uid,
+      schoolId:         req.authUser!.schoolId,
+      subject:           data.subject,
+      topic:             data.topic,
+      grade:             data.grade,
+      duration:          data.duration,
+      generatedContent:  lesson,
+      channel:           "web",
+      createdAt,
+    });
+
+    res.json({ success: true, lesson, lessonId: docRef.id, createdAt });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: err.errors });
     }
+    console.error(err);
     res.status(500).json({ error: "Lesson generation failed" });
   }
 });

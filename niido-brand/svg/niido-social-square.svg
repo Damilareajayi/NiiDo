@@ -1,0 +1,22 @@
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1080" fill="#1e0a3c"/>
+  <circle cx="900" cy="200" r="300" fill="#38BDF8" opacity="0.07"/>
+  <circle cx="180" cy="900" r="250" fill="#F43F5E" opacity="0.06"/>
+  <circle cx="950" cy="880" r="200" fill="#00A896" opacity="0.06"/>
+  <circle cx="440" cy="270" r="52" fill="#38BDF8"/>
+  <circle cx="560" cy="270" r="52" fill="#00A896"/>
+  <circle cx="500" cy="178" r="52" fill="#F43F5E"/>
+  <text x="80" y="560" font-family="Poppins,Liberation Sans,Arial,sans-serif" font-size="160">
+    <tspan font-weight="700" fill="#a78bfa">nıı</tspan><tspan font-weight="300" fill="#e9d5ff">do</tspan>
+  </text>
+  <circle cx="213.4" cy="446.7" r="18" fill="#38BDF8"/>
+  <circle cx="264.8" cy="446.7" r="18" fill="#00A896"/>
+  <circle cx="239.1" cy="406.7" r="18" fill="#F43F5E"/>
+  <rect x="80" y="582" width="580" height="4" rx="2" fill="#a78bfa" opacity="0.2"/>
+  <text x="80" y="638" font-family="Poppins,Liberation Sans,Arial,sans-serif" font-size="32" fill="#F43F5E" opacity="0.85" letter-spacing="2">For Every Learner</text>
+  <text x="80" y="684" font-family="Poppins,Liberation Sans,Arial,sans-serif" font-size="22" fill="#a78bfa" opacity="0.5" letter-spacing="1">by LearnScape Africa</text>
+  <text x="540" y="860" text-anchor="middle" font-family="Poppins,Liberation Sans,Arial,sans-serif" font-size="20" fill="#6B7280">Adaptive · Inclusive · Neurodiversity-first</text>
+  <circle cx="456" cy="968" r="18" fill="#38BDF8" opacity="0.7"/>
+  <circle cx="506" cy="968" r="18" fill="#00A896" opacity="0.7"/>
+  <circle cx="556" cy="968" r="18" fill="#F43F5E" opacity="0.7"/>
+</svg>

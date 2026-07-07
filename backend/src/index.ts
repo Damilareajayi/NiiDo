@@ -10,6 +10,8 @@ import { teachRouter }  from "./routes/teach";
 import { pulseRouter }  from "./routes/pulse";
 import { uploadRouter } from "./routes/upload";
 import { whatsappRouter } from "./routes/whatsapp";
+import { adminRouter }  from "./routes/admin";
+import { teacherRouter } from "./routes/teacher";
 import "./firebase";
 
 const app  = express();
@@ -44,6 +46,16 @@ const aiLimiter = rateLimit({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// ── Root ──────────────────────────────────────
+app.get("/", (_req, res) => {
+  res.json({
+    service: "NiiDo API",
+    message: "This is the NiiDo backend — the app itself is at the frontend URL (e.g. http://localhost:3000).",
+    health: "/health",
+    endpoints: ["/api/read", "/api/teach", "/api/pulse", "/api/upload", "/api/whatsapp", "/api/admin", "/api/teacher"],
+  });
+});
+
 // ── Health check ─────────────────────────────
 app.get("/health", (_req, res) => {
   res.json({
@@ -60,6 +72,8 @@ app.use("/api/teach",    aiLimiter, teachRouter);
 app.use("/api/pulse",    pulseRouter);
 app.use("/api/upload",   uploadRouter);
 app.use("/api/whatsapp", whatsappRouter);
+app.use("/api/admin",    adminRouter);
+app.use("/api/teacher",  teacherRouter);
 
 // ── 404 handler ──────────────────────────────
 app.use((_req, res) => {

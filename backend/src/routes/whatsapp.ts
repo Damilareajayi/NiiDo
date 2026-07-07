@@ -1,14 +1,39 @@
 import { Router, Request, Response } from "express";
+import twilio from "twilio";
 import { generateLessonPlan, generateParentMessage } from "../services/gemini";
+import { requireAuth, requireRole } from "../middleware/auth";
 
 export const whatsappRouter = Router();
 
+const twilioConfigured = !!process.env.TWILIO_ACCOUNT_SID?.startsWith("AC") && !!process.env.TWILIO_AUTH_TOKEN;
+const twilioClient = twilioConfigured
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+
+async function sendWhatsApp(to: string, body: string) {
+  if (!twilioClient) {
+    console.log(`[WhatsApp:not configured] To: ${to}\n${body}`);
+    return { sent: false, reason: "Twilio not configured" };
+  }
+  const message = await twilioClient.messages.create({
+    from: process.env.TWILIO_WHATSAPP_NUMBER,
+    to: to.startsWith("whatsapp:") ? to : `whatsapp:${to}`,
+    body,
+  });
+  return { sent: true, sid: message.sid };
+}
+
+function replyTwiml(res: Response, message: string) {
+  const twiml = new twilio.twiml.MessagingResponse();
+  twiml.message(message);
+  res.type("text/xml").send(twiml.toString());
+}
+
 // POST /api/whatsapp/webhook
-// Receives incoming WhatsApp messages via Twilio/Meta webhook
+// Receives incoming WhatsApp messages via Twilio and auto-replies with TwiML
 whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
   try {
     const body    = req.body;
-    const from    = body.From || body.from || "";
     const message = (body.Body || body.body || "").trim().toLowerCase();
 
     // Teacher commands:
@@ -26,24 +51,17 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
           totalStudents:     30,
           language:          "en",
         });
-        const reply = formatLessonForWhatsApp(lesson, parsed);
-        return res.json({ reply, to: from });
+        return replyTwiml(res, formatLessonForWhatsApp(lesson, parsed));
       }
     }
 
     // Parent commands
     if (message === "progress" || message === "update") {
-      return res.json({
-        reply: "📊 To get your child's progress report, please ask their teacher to send you an update through NiiDo.",
-        to: from,
-      });
+      return replyTwiml(res, "📊 To get your child's progress report, please ask their teacher to send you an update through NiiDo.");
     }
 
     // Default help message
-    res.json({
-      reply: `👋 Welcome to NiiDo!\n\n*For teachers:* Send a message like:\n_"JSS2 Mathematics Fractions 45min"_\nto generate a lesson plan.\n\n*For parents:* Reply *PROGRESS* to get your child's latest update.\n\n🌐 niido.learnscape.africa`,
-      to: from,
-    });
+    replyTwiml(res, `👋 Welcome to NiiDo!\n\n*For teachers:* Send a message like:\n_"JSS2 Mathematics Fractions 45min"_\nto generate a lesson plan.\n\n*For parents:* Reply *PROGRESS* to get your child's latest update.\n\n🌐 niido.learnscape.africa`);
   } catch (err) {
     console.error("WhatsApp webhook error:", err);
     res.status(500).json({ error: "Webhook processing failed" });
@@ -52,7 +70,7 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
 
 // POST /api/whatsapp/notify-parent
 // Send a notification to a parent about their child's assessment
-whatsappRouter.post("/notify-parent", async (req: Request, res: Response) => {
+whatsappRouter.post("/notify-parent", requireAuth, requireRole("teacher", "admin"), async (req: Request, res: Response) => {
   try {
     const { studentName, primaryTrack, supportLevel, parentNote, language, parentPhone } = req.body;
 
@@ -64,12 +82,11 @@ whatsappRouter.post("/notify-parent", async (req: Request, res: Response) => {
       language: language || "en",
     });
 
-    // TODO: Send via Twilio or Meta WhatsApp API
-    // For now, return the message for logging
-    console.log(`[WhatsApp] To: ${parentPhone}\nMessage: ${message}`);
+    const result = await sendWhatsApp(parentPhone, message);
 
-    res.json({ success: true, message, phone: parentPhone });
+    res.json({ success: true, message, phone: parentPhone, ...result });
   } catch (err) {
+    console.error("WhatsApp notify-parent error:", err);
     res.status(500).json({ error: "Notification failed" });
   }
 });
