@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LangProvider } from "@/hooks/useLang";
+import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export const metadata: Metadata = {
   title: "NiiDo — Every child learns differently",
   description:
-    "Africa's adaptive learning platform. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
+    "The adaptive learning platform for every learner, everywhere. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-body antialiased bg-stone-50 text-stone-900">
+        <GoogleTranslate />
+        <LanguageSwitcher />
         <AuthProvider>
           <LangProvider>
             {children}

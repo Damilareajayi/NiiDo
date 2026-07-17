@@ -168,6 +168,7 @@ export default function AdminTeachersPage() {
         <FadeIn delay={0.08}>
           <EmptyState
             icon={GraduationCap}
+            mascotSrc="/mascot/mascot-waving.png"
             title="No teachers yet"
             description="Add your first teacher above to start assigning classes and generating lesson plans."
             colorClass="bg-brand-100 text-brand-600"

@@ -7,7 +7,7 @@ import { FadeIn } from "@/components/ui/FadeIn";
 import { StatCard } from "@/components/ui/StatCard";
 import { StatCardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Users, Brain, BarChart3 } from "lucide-react";
+import { Users, Brain, BarChart3, AlertTriangle } from "lucide-react";
 
 interface ClassStats {
   totalStudents: number;
@@ -17,22 +17,26 @@ interface ClassStats {
 }
 
 const TRACKS = [
-  { key: "visual",      label: "Visual",      color: "bg-purple-400" },
-  { key: "kinesthetic",  label: "Hands-On",    color: "bg-green-400" },
-  { key: "auditory",    label: "Auditory",     color: "bg-blue-400" },
-  { key: "readwrite",   label: "Read/Write",   color: "bg-amber-400" },
-  { key: "multimodal",  label: "Multimodal",   color: "bg-pink-400" },
+  { key: "visual",      label: "Visual",      color: "bg-purple-500" },
+  { key: "kinesthetic",  label: "Hands-On",    color: "bg-green-500" },
+  { key: "auditory",    label: "Auditory",     color: "bg-blue-500" },
+  { key: "readwrite",   label: "Read/Write",   color: "bg-amber-500" },
+  { key: "multimodal",  label: "Multimodal",   color: "bg-pink-500" },
 ];
 
 export default function TeacherClassPage() {
   const { t } = useLang();
   const [stats, setStats] = useState<ClassStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     apiFetch("/api/teacher/class-stats")
-      .then((res) => res.json())
-      .then(setStats)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to fetch class stats");
+        setStats(await res.json());
+      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -50,10 +54,20 @@ export default function TeacherClassPage() {
           <StatCardSkeleton />
           <StatCardSkeleton />
         </div>
+      ) : error ? (
+        <FadeIn delay={0.08}>
+          <EmptyState
+            icon={AlertTriangle}
+            title="Couldn't load your class"
+            description="Something went wrong fetching your class stats. Please try again in a moment."
+            colorClass="bg-red-100 text-red-600"
+          />
+        </FadeIn>
       ) : !stats || stats.totalStudents === 0 ? (
         <FadeIn delay={0.08}>
           <EmptyState
             icon={Users}
+            mascotSrc="/mascot/mascot-reading.png"
             title="No students yet"
             description="Ask your admin to assign students to you, or import your class register."
             actionLabel="Import Students"
@@ -65,7 +79,7 @@ export default function TeacherClassPage() {
         <>
           <div className="grid grid-cols-2 gap-4 mb-8">
             <StatCard index={0} label="Total Students" value={stats.totalStudents} icon={Users} color="bg-brand-100 text-brand-600" />
-            <StatCard index={1} label="Assessed" value={`${stats.readCompletionRate}%`} icon={Brain} color="bg-teal-100 text-teal-600" />
+            <StatCard index={1} label="Assessed" value={`${stats.readCompletionRate}%`} icon={Brain} color="bg-coral-100 text-coral-600" />
           </div>
 
           <FadeIn delay={0.2}>

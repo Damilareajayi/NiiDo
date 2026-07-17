@@ -1,4 +1,4 @@
-# NiiDo — Africa's Adaptive Learning Platform
+# NiiDo — The Adaptive Learning Platform for Every Learner, Everywhere
 
 > *Every child learns differently. NiiDo sees that.*
 

@@ -2,6 +2,12 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { generateLessonPlan } from "../services/gemini";
+import {
+  eduPromptConfigured,
+  generateLessonViaEduPrompt,
+  humanizeGrade,
+  humanizeSubject,
+} from "../services/eduprompt";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole } from "../middleware/auth";
 
@@ -14,22 +20,46 @@ const LessonSchema = z.object({
   duration:          z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(80)]),
   trackDistribution: z.record(z.string(), z.number()).optional().default({}),
   totalStudents:     z.number().min(1).max(200).optional().default(30),
-  language:          z.enum(["en", "ha", "yo", "ig"]).optional().default("en"),
+  language:          z.enum(["en", "ha", "yo", "ig", "fr"]).optional().default("en"),
 });
 
 // POST /api/teach/generate
 teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), async (req: Request, res: Response) => {
   try {
     const data = LessonSchema.parse(req.body);
-    const lesson = await generateLessonPlan({
-      subject:           data.subject as any,
-      topic:             data.topic,
-      grade:             data.grade as any,
-      duration:          data.duration,
-      trackDistribution: data.trackDistribution as any,
-      totalStudents:     data.totalStudents,
-      language:          data.language,
-    });
+
+    let lesson: any;
+    let provider: string;
+    let contentType: "markdown" | "structured";
+
+    try {
+      if (!eduPromptConfigured) throw new Error("EduPrompt not configured");
+      const { lesson: markdown, provider: eduProvider } = await generateLessonViaEduPrompt({
+        subject:    humanizeSubject(data.subject),
+        grade:      humanizeGrade(data.grade),
+        topic:      data.topic,
+        // No curriculum pinned — NiiDo serves schools across many curricula, so this
+        // uses EduPrompt's own hybrid default rather than assuming Nigeria's NERDC.
+        classSize:  `~${data.totalStudents} students`,
+        detail:     "standard",
+      });
+      lesson = { markdown, provider: eduProvider };
+      provider = eduProvider;
+      contentType = "markdown";
+    } catch (eduErr) {
+      console.error("EduPrompt generation failed, falling back to Gemini:", eduErr instanceof Error ? eduErr.message : eduErr);
+      lesson = await generateLessonPlan({
+        subject:           data.subject as any,
+        topic:             data.topic,
+        grade:             data.grade as any,
+        duration:          data.duration,
+        trackDistribution: data.trackDistribution as any,
+        totalStudents:     data.totalStudents,
+        language:          data.language,
+      });
+      provider = "gemini";
+      contentType = "structured";
+    }
 
     const createdAt = Timestamp.now();
     const docRef = await db.collection("lessons").add({
@@ -40,11 +70,13 @@ teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), asyn
       grade:             data.grade,
       duration:          data.duration,
       generatedContent:  lesson,
+      provider,
+      contentType,
       channel:           "web",
       createdAt,
     });
 
-    res.json({ success: true, lesson, lessonId: docRef.id, createdAt });
+    res.json({ success: true, lesson, provider, contentType, lessonId: docRef.id, createdAt });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: err.errors });

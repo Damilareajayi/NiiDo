@@ -8,7 +8,7 @@ const TRACKS = ["visual", "auditory", "kinesthetic", "readwrite", "multimodal"] 
 export const pulseRouter = Router();
 
 // GET /api/pulse/school/:schoolId
-pulseRouter.get("/school/:schoolId", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
+pulseRouter.get("/school/:schoolId", requireAuth, requireRole("admin", "teacher"), async (req: Request, res: Response) => {
   const { schoolId } = req.params;
   if (schoolId !== req.authUser!.schoolId) {
     return res.status(403).json({ error: "Cannot view another school's data" });

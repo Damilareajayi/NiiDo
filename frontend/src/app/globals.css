@@ -46,6 +46,12 @@
            shadow-sm hover:shadow-md active:scale-[0.98];
   }
 
+  .btn-coral {
+    @apply bg-coral-500 hover:bg-coral-600 text-white font-semibold
+           px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md active:scale-[0.98];
+  }
+
   .btn-outline {
     @apply border-2 border-brand-500 text-brand-600 hover:bg-brand-50
            font-semibold px-5 py-2.5 rounded-xl transition-all duration-200;
@@ -66,15 +72,15 @@
     @apply bg-white rounded-2xl border border-stone-200;
   }
 
-  /* Module badges */
+  /* Module badges — each of the three modules gets one of the three brand dot colors */
   .badge-read {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-           bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200;
+           bg-coral-50 text-coral-700 text-xs font-semibold border border-coral-200;
   }
 
   .badge-teach {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-           bg-brand-50 text-brand-700 text-xs font-semibold border border-brand-200;
+           bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200;
   }
 
   .badge-pulse {
@@ -137,4 +143,23 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Google Translate — the widget itself is hidden entirely (driven
+   programmatically by our own LanguageSwitcher UI instead, see
+   lib/googleTranslate.ts). Just suppress the top banner iframe Google
+   still injects into the page when a translation is active, which
+   would otherwise push the whole page down. */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+/* Google highlights each translated span on hover with a background/tooltip
+   showing the original text — remove that so hovering any text behaves
+   normally instead of popping up a translation box everywhere. */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+body {
+  top: 0 !important;
 }

@@ -47,7 +47,7 @@ export default function TeacherStudentsPage() {
           </h1>
           <p className="text-stone-500 mt-1">Students assigned to your classes</p>
         </div>
-        <Link href="/teacher/upload" className="btn-teal flex items-center gap-2">
+        <Link href="/teacher/upload" className="btn-brand flex items-center gap-2">
           <Upload className="w-4 h-4" /> Import Students
         </Link>
       </FadeIn>
@@ -60,11 +60,12 @@ export default function TeacherStudentsPage() {
         <FadeIn delay={0.08}>
           <EmptyState
             icon={Users}
+            mascotSrc="/mascot/mascot-waving.png"
             title="No students assigned yet"
             description="Ask your admin to assign students to you, or import your class register."
             actionLabel="Import Students"
             actionHref="/teacher/upload"
-            colorClass="bg-teal-100 text-teal-600"
+            colorClass="bg-brand-100 text-brand-600"
           />
         </FadeIn>
       ) : (
@@ -77,8 +78,8 @@ export default function TeacherStudentsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(i, 8) * 0.04 }}
             >
-              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5 text-teal-600" />
+              <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 text-brand-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-stone-900 truncate">{student.name}</p>

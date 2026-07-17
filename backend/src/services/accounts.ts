@@ -37,6 +37,9 @@ export async function createStudentAccount(schoolId: string, data: {
     language: data.language || "en",
     createdAt: Timestamp.now(),
     lastActive: Timestamp.now(),
+    // No payment processor wired up yet — always starts "free" until manually
+    // upgraded (see backend/scripts/set-premium.ts) or real billing lands.
+    subscriptionTier: "free",
   };
 
   await Promise.all([

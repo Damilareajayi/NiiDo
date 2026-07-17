@@ -3,7 +3,7 @@
 // ============================================
 
 export type UserRole = "student" | "teacher" | "admin";
-export type Language = "en" | "ha" | "yo" | "ig";
+export type Language = "en" | "ha" | "yo" | "ig" | "fr";
 export type LearningTrack =
   | "visual"
   | "auditory"
@@ -30,7 +30,9 @@ export type Grade =
   | "primary_1" | "primary_2" | "primary_3"
   | "primary_4" | "primary_5" | "primary_6"
   | "jss_1" | "jss_2" | "jss_3"
-  | "sss_1" | "sss_2" | "sss_3";
+  | "sss_1" | "sss_2" | "sss_3"
+  | "undergrad_1" | "undergrad_2" | "undergrad_3" | "undergrad_4" | "undergrad_5"
+  | "grad_masters" | "grad_phd";
 
 // ============================================
 // User & Auth
@@ -46,6 +48,18 @@ export interface NiiDoUser {
   language: Language;
   createdAt: Date;
   lastActive: Date;
+  // student-specific
+  grade?: Grade;
+  age?: number;
+  gender?: "male" | "female" | "other";
+  // student/teacher-specific — free-text school name given at signup,
+  // not necessarily linked to a real School document (see routes/auth.ts)
+  schoolName?: string;
+  // teacher-specific
+  subjects?: Subject[];
+  // Billing — defaults to "free" at signup. No payment processor is wired up yet;
+  // this is set manually (see backend/scripts/set-premium.ts) until Stripe billing exists.
+  subscriptionTier?: "free" | "premium";
 }
 
 // ============================================
@@ -105,17 +119,17 @@ export interface AssessmentResponse {
   questionId: string;
   questionText: string;
   selectedOption: string;
-  indicatorType: LearningTrack | "attention" | "social" | "frustration";
+  indicatorType: LearningTrack | "attention" | "social" | "frustration" | "sensory" | "routine" | "focus";
   timeSpent: number; // seconds
 }
 
 export interface AssessmentQuestion {
   id: string;
-  section: "attention" | "preference" | "challenge" | "social";
+  section: "attention" | "preference" | "challenge" | "social" | "sensory";
   text: string;
   options: {
     label: string;
-    indicator: LearningTrack | "attention" | "social" | "frustration";
+    indicator: LearningTrack | "attention" | "social" | "frustration" | "sensory" | "routine" | "focus";
   }[];
   ageRange?: [number, number];
 }
@@ -161,19 +175,25 @@ export interface LessonPlan {
   channel: "web" | "whatsapp"; // how it was generated
 }
 
+// EduPrompt (the preferred generator) returns a markdown blob + provider name.
+// Gemini (fallback, when EduPrompt is unavailable) returns the structured fields below.
+// Exactly one of the two shapes is populated on any given LessonContent.
 export interface LessonContent {
-  objectives: string[];
-  materials: string[];
-  introduction: string;
-  mainActivity: {
+  markdown?: string;
+  provider?: string;
+
+  objectives?: string[];
+  materials?: string[];
+  introduction?: string;
+  mainActivity?: {
     standard: string;
     support: string;    // for struggling learners
     extension: string;  // for advanced learners
   };
-  assessment: string;
+  assessment?: string;
   homework?: string;
-  neurodivergentTips: string[];
-  adaptationsByTrack: Record<LearningTrack, string>;
+  neurodivergentTips?: string[];
+  adaptationsByTrack?: Record<LearningTrack, string>;
 }
 
 // ============================================

@@ -7,7 +7,7 @@ import { useLang } from "@/hooks/useLang";
 import {
   BookOpen, Brain, GraduationCap, BarChart3,
   Users, LayoutDashboard, Settings, LogOut,
-  Upload, ClipboardList, Menu, X
+  Upload, ClipboardList, Menu, X, UserCircle
 } from "lucide-react";
 import { useState } from "react";
 
@@ -34,6 +34,7 @@ export default function Sidebar() {
     { href: "/teacher",            label: t.nav.dashboard,   icon: LayoutDashboard },
     { href: "/teacher/teach",      label: t.modules.teach,   icon: GraduationCap,   badge: "NiiDo Teach" },
     { href: "/teacher/class",      label: t.nav.classes,     icon: Users },
+    { href: "/teacher/pulse",      label: t.modules.pulse,   icon: BarChart3,       badge: "NiiDo Pulse" },
     { href: "/teacher/students",   label: t.nav.students,    icon: ClipboardList },
     { href: "/teacher/upload",     label: "Import Students", icon: Upload },
   ];
@@ -51,10 +52,10 @@ export default function Sidebar() {
     user?.role === "teacher" ? teacherNav :
     adminNav;
 
-  // Module color by role
+  // Module color by role — matches the three brand dot colors (Read=coral, Teach=teal, Pulse=sky)
   const roleColor =
-    user?.role === "student" ? "bg-teal-500" :
-    user?.role === "teacher" ? "bg-brand-500" :
+    user?.role === "student" ? "bg-coral-500" :
+    user?.role === "teacher" ? "bg-teal-500" :
     "bg-sky-500";
 
   const SidebarContent = () => (
@@ -86,8 +87,8 @@ export default function Sidebar() {
               <span className="flex-1">{item.label}</span>
               {item.badge && (
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                  ${item.badge.includes("Read")  ? "bg-teal-100 text-teal-700" :
-                    item.badge.includes("Teach") ? "bg-brand-100 text-brand-700" :
+                  ${item.badge.includes("Read")  ? "bg-coral-100 text-coral-700" :
+                    item.badge.includes("Teach") ? "bg-teal-100 text-teal-700" :
                     "bg-sky-100 text-sky-700"}`}>
                   AI
                 </span>
@@ -99,6 +100,10 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="p-3 border-t border-stone-100 space-y-0.5">
+        <Link href="/profile" className="sidebar-link">
+          <UserCircle className="w-4 h-4" />
+          <span>Profile</span>
+        </Link>
         <Link href="/settings" className="sidebar-link">
           <Settings className="w-4 h-4" />
           <span>{t.nav.settings}</span>

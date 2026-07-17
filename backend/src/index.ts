@@ -12,6 +12,8 @@ import { uploadRouter } from "./routes/upload";
 import { whatsappRouter } from "./routes/whatsapp";
 import { adminRouter }  from "./routes/admin";
 import { teacherRouter } from "./routes/teacher";
+import { authRouter }   from "./routes/auth";
+import { learnRouter }  from "./routes/learn";
 import "./firebase";
 
 const app  = express();
@@ -40,6 +42,13 @@ const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10,
   message: "AI request limit reached. Please wait a moment.",
+});
+
+// Stricter limit for signup (abuse protection — no auth exists yet at this point)
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: "Too many signup attempts. Please try again later.",
 });
 
 // ── Body parsing ─────────────────────────────
@@ -74,6 +83,8 @@ app.use("/api/upload",   uploadRouter);
 app.use("/api/whatsapp", whatsappRouter);
 app.use("/api/admin",    adminRouter);
 app.use("/api/teacher",  teacherRouter);
+app.use("/api/auth",     signupLimiter, authRouter);
+app.use("/api/learn",    aiLimiter, learnRouter);
 
 // ── 404 handler ──────────────────────────────
 app.use((_req, res) => {

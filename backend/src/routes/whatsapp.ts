@@ -1,7 +1,9 @@
 import { Router, Request, Response } from "express";
 import twilio from "twilio";
-import { generateLessonPlan, generateParentMessage } from "../services/gemini";
+import { generateLessonPlan, generateParentMessage, generatePracticeQuestion, gradePracticeAnswer } from "../services/gemini";
+import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeSubject } from "../services/eduprompt";
 import { requireAuth, requireRole } from "../middleware/auth";
+import { db, Timestamp } from "../firebase";
 
 export const whatsappRouter = Router();
 
@@ -34,7 +36,32 @@ function replyTwiml(res: Response, message: string) {
 whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
   try {
     const body    = req.body;
+    const from    = body.From || body.from || "";
     const message = (body.Body || body.body || "").trim().toLowerCase();
+
+    // Student practice command: "practice mathematics fractions"
+    // Bounded flow only — one question, one graded answer, no open chat.
+    if (isPracticeRequest(message)) {
+      const parsed = parsePracticeRequest(message);
+      if (parsed) {
+        const { question, correctAnswer } = await generatePracticeQuestion(parsed);
+        await savePendingSession(from, { subject: parsed.subject, topic: parsed.topic, question, correctAnswer });
+        return replyTwiml(res, `📝 *Practice: ${parsed.topic}*\n\n${question}\n\n_Reply with your answer!_`);
+      }
+    }
+
+    // If this student has a pending question, treat this message as their answer
+    const pending = await getPendingSession(from);
+    if (pending) {
+      await clearPendingSession(from);
+      const { correct, feedback } = await gradePracticeAnswer({
+        question: pending.question,
+        correctAnswer: pending.correctAnswer,
+        studentAnswer: body.Body || body.body || "",
+      });
+      const emoji = correct ? "✅" : "💡";
+      return replyTwiml(res, `${emoji} ${feedback}\n\n_Reply "practice [subject] [topic]" for another question!_`);
+    }
 
     // Teacher commands:
     // "jss2 mathematics fractions 45" → generate lesson plan
@@ -42,16 +69,29 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
     if (isLessonRequest(message)) {
       const parsed = parseLessonRequest(message);
       if (parsed) {
-        const lesson = await generateLessonPlan({
-          subject:           parsed.subject as any,
-          topic:             parsed.topic,
-          grade:             parsed.grade as any,
-          duration:          parsed.duration,
-          trackDistribution: {},
-          totalStudents:     30,
-          language:          "en",
-        });
-        return replyTwiml(res, formatLessonForWhatsApp(lesson, parsed));
+        try {
+          if (!eduPromptConfigured) throw new Error("EduPrompt not configured");
+          const { lesson: markdown } = await generateLessonViaEduPrompt({
+            subject:    humanizeSubject(parsed.subject),
+            grade:      humanizeGrade(parsed.grade),
+            topic:      parsed.topic,
+            // No curriculum pinned — see routes/teach.ts for why.
+            detail:     "short",
+          });
+          return replyTwiml(res, formatMarkdownLessonForWhatsApp(markdown, parsed));
+        } catch (eduErr) {
+          console.error("EduPrompt WhatsApp generation failed, falling back to Gemini:", eduErr instanceof Error ? eduErr.message : eduErr);
+          const lesson = await generateLessonPlan({
+            subject:           parsed.subject as any,
+            topic:             parsed.topic,
+            grade:             parsed.grade as any,
+            duration:          parsed.duration,
+            trackDistribution: {},
+            totalStudents:     30,
+            language:          "en",
+          });
+          return replyTwiml(res, formatLessonForWhatsApp(lesson, parsed));
+        }
       }
     }
 
@@ -61,7 +101,7 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
     }
 
     // Default help message
-    replyTwiml(res, `👋 Welcome to NiiDo!\n\n*For teachers:* Send a message like:\n_"JSS2 Mathematics Fractions 45min"_\nto generate a lesson plan.\n\n*For parents:* Reply *PROGRESS* to get your child's latest update.\n\n🌐 niido.learnscape.africa`);
+    replyTwiml(res, `👋 Welcome to NiiDo!\n\n*For students:* Send a message like:\n_"Practice Mathematics Fractions"_\nto get a practice question.\n\n*For teachers:* Send a message like:\n_"JSS2 Mathematics Fractions 45min"_\nto generate a lesson plan.\n\n*For parents:* Reply *PROGRESS* to get your child's latest update.\n\n🌐 niido.learnscape.africa`);
   } catch (err) {
     console.error("WhatsApp webhook error:", err);
     res.status(500).json({ error: "Webhook processing failed" });
@@ -92,6 +132,45 @@ whatsappRouter.post("/notify-parent", requireAuth, requireRole("teacher", "admin
 });
 
 // ── Helpers ──────────────────────────────────────────────────
+
+const PRACTICE_SUBJECT_MAP: Record<string, string> = {
+  "maths": "mathematics", "math": "mathematics", "mathematics": "mathematics",
+  "english": "english", "science": "basic science", "social": "social studies",
+  "civic": "civic education", "computer": "computer studies",
+};
+
+function isPracticeRequest(msg: string): boolean {
+  return msg.startsWith("practice");
+}
+
+function parsePracticeRequest(msg: string): { subject: string; topic: string } | null {
+  const rest = msg.replace(/^practice[:\s]*/i, "").trim();
+  if (!rest) return null;
+
+  const words = rest.split(/\s+/);
+  const firstWord = words[0];
+  const matchedSubject = PRACTICE_SUBJECT_MAP[firstWord];
+
+  const subject = matchedSubject || "general knowledge";
+  const topic = (matchedSubject ? words.slice(1).join(" ") : rest).trim();
+
+  return { subject, topic: topic || subject };
+}
+
+// Bounded per-phone-number session — one pending question at a time,
+// stored in Firestore since Twilio webhooks are stateless per-message.
+async function getPendingSession(phone: string) {
+  const snap = await db.collection("whatsappSessions").doc(phone).get();
+  return snap.exists ? snap.data() : null;
+}
+
+async function savePendingSession(phone: string, data: { subject: string; topic: string; question: string; correctAnswer: string }) {
+  await db.collection("whatsappSessions").doc(phone).set({ ...data, createdAt: Timestamp.now() });
+}
+
+async function clearPendingSession(phone: string) {
+  await db.collection("whatsappSessions").doc(phone).delete();
+}
 
 function isLessonRequest(msg: string): boolean {
   const keywords = ["jss", "sss", "primary", "lesson", "teach me", "plan for"];
@@ -124,6 +203,21 @@ function parseLessonRequest(msg: string) {
     .trim();
 
   return { grade, subject, topic: cleaned || "Introduction", duration };
+}
+
+// WhatsApp bodies over ~1600 chars get rejected/truncated by carriers,
+// so trim EduPrompt's markdown and strip formatting it doesn't understand.
+const WHATSAPP_MAX_CHARS = 1500;
+
+function formatMarkdownLessonForWhatsApp(markdown: string, meta: any): string {
+  const plain = markdown
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "*$1*")
+    .trim();
+  const truncated = plain.length > WHATSAPP_MAX_CHARS
+    ? plain.slice(0, WHATSAPP_MAX_CHARS) + "…"
+    : plain;
+  return `📚 *NiiDo Teach — Lesson Plan*\n\n${truncated}`;
 }
 
 function formatLessonForWhatsApp(lesson: any, meta: any): string {

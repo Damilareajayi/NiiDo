@@ -16,7 +16,7 @@ const AnalyseSchema = z.object({
   })),
   age:        z.number().min(4).max(20),
   grade:      z.string(),
-  language:   z.enum(["en", "ha", "yo", "ig"]),
+  language:   z.enum(["en", "ha", "yo", "ig", "fr"]),
 });
 
 // POST /api/read/analyse
@@ -46,7 +46,7 @@ readRouter.post("/analyse", requireAuth, async (req: Request, res: Response) => 
       },
     }, { merge: true });
 
-    res.json({ success: true, profile: { ...profile, completedAt }, studentId });
+    res.json({ success: true, profile: { ...profile, completedAt, rawResponses: data.responses }, studentId });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request data", details: err.errors });
@@ -249,6 +249,56 @@ const ASSESSMENT_QUESTIONS = [
       { label: "Science experiments or building things",     indicator: "kinesthetic" },
       { label: "Reading and writing stories or essays",      indicator: "readwrite" },
       { label: "Looking at maps, diagrams or watching demos", indicator: "visual" },
+    ],
+  },
+
+  // Section 5: Sensory & Focus — richer signal on sensory sensitivity,
+  // routine preference, sustained attention, and communication style.
+  // Never diagnostic, never named conditions — same strengths-based
+  // framing as every other section.
+  {
+    id: "se1", section: "sensory",
+    text: "When there are bright lights or loud sounds around you, you...",
+    options: [
+      { label: "Find it hard to focus and prefer somewhere calmer", indicator: "sensory" },
+      { label: "Don't really notice it either way",                indicator: "multimodal" },
+      { label: "Actually like some background noise while working", indicator: "auditory" },
+    ],
+  },
+  {
+    id: "se2", section: "sensory",
+    text: "When your daily plans suddenly change, you feel...",
+    options: [
+      { label: "I like knowing what to expect, so sudden change feels tricky at first", indicator: "routine" },
+      { label: "I enjoy surprises and new things happening",     indicator: "kinesthetic" },
+      { label: "I adjust quickly either way",                    indicator: "multimodal" },
+    ],
+  },
+  {
+    id: "se3", section: "sensory",
+    text: "When you're really interested in something, you...",
+    options: [
+      { label: "Could focus on it for hours and lose track of time", indicator: "focus" },
+      { label: "Enjoy it for a while, then like to switch to something else", indicator: "multimodal" },
+      { label: "Prefer exploring lots of different things rather than one deeply", indicator: "visual" },
+    ],
+  },
+  {
+    id: "se4", section: "sensory",
+    text: "In a room full of people, you feel most comfortable when...",
+    options: [
+      { label: "You have a quiet corner or one close friend to talk to", indicator: "social" },
+      { label: "You're in the middle of the group, talking to everyone", indicator: "auditory" },
+      { label: "You can move around and do something active",    indicator: "kinesthetic" },
+    ],
+  },
+  {
+    id: "se5", section: "sensory",
+    text: "You understand instructions best when they are...",
+    options: [
+      { label: "Given one clear step at a time",                 indicator: "routine" },
+      { label: "Explained with the bigger picture first",        indicator: "visual" },
+      { label: "Shown to you by someone doing it",                indicator: "kinesthetic" },
     ],
   },
 ];

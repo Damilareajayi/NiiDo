@@ -8,7 +8,31 @@
       "Bash(cat next.config.mjs)",
       "Bash(cat next-env.d.ts)",
       "Bash(git add *)",
-      "Bash(curl -s http://localhost:4000/health)"
+      "Bash(curl -s http://localhost:4000/health)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 46120 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 35792 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s -m 10 -o /dev/null -w \"landing: %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"landing: %{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"assessment: %{http_code}\\\\n\" http://localhost:3000/assessment)",
+      "Bash(node -e ' *)",
+      "Skill(dataviz)",
+      "Skill(dataviz:*)",
+      "Bash(node \"C:/Users/dfa24/AppData/Local/Temp/claude/bundled-skills/2.1.211/9241a4c11f28143ed89f90e9ea959005/dataviz/scripts/validate_palette.js\" \"#c084fc,#4ade80,#60a5fa,#fbbf24,#f472b6\" --mode light)",
+      "Bash(node \"C:/Users/dfa24/AppData/Local/Temp/claude/bundled-skills/2.1.211/9241a4c11f28143ed89f90e9ea959005/dataviz/scripts/validate_palette.js\" \"#a855f7,#22c55e,#3b82f6,#f59e0b,#ec4899\" --mode light)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"login: %{http_code}\\\\n\" http://localhost:3000/login)",
+      "Bash(node removeScenebg.js \"C:/Users/dfa24/Downloads/Gemini_Generated_Image_htop0dhtop0dhtop.png\" \"./read-nobg.png\")",
+      "Bash(node removeScenebg.js \"C:/Users/dfa24/Downloads/Gemini_Generated_Image_elmd9elmd9elmd9e.png\" \"./pulse-nobg.png\")",
+      "Bash(curl -s -m 8 -o /dev/null -w \"mascot-read.webp: %{http_code}\\\\n\" http://localhost:3000/mascot/mascot-read.webp)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"mascot-pulse.webp: %{http_code}\\\\n\" http://localhost:3000/mascot/mascot-pulse.webp)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"signup: %{http_code}\\\\n\" http://localhost:3000/signup)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 30816 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s -m 8 -o /dev/null -w \"student/learn: %{http_code}\\\\n\" http://localhost:3000/student/learn)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 56900 -Force -ErrorAction SilentlyContinue; Stop-Process -Id 544 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s -m 10 -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 45444 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 44892 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 52616 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 48336 -Force -ErrorAction SilentlyContinue\")"
     ]
   }
 }

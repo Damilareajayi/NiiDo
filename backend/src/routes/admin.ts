@@ -16,7 +16,7 @@ const CreateTeacherSchema = z.object({
   name:      z.string().min(2),
   email:     z.string().email(),
   subjects:  z.array(z.string()).optional().default([]),
-  language:  z.enum(["en", "ha", "yo", "ig"]).optional().default("en"),
+  language:  z.enum(["en", "ha", "yo", "ig", "fr"]).optional().default("en"),
 });
 
 // POST /api/admin/teachers
@@ -77,10 +77,10 @@ const CreateStudentSchema = z.object({
   name:      z.string().min(2),
   grade:     z.string(),
   gender:    z.enum(["male", "female", "other"]).optional(),
-  age:       z.number().min(4).max(20).optional(),
+  age:       z.number().min(4).max(99).optional(),
   email:     z.string().email().optional(),
   teacherId: z.string().optional(),
-  language:  z.enum(["en", "ha", "yo", "ig"]).optional().default("en"),
+  language:  z.enum(["en", "ha", "yo", "ig", "fr"]).optional().default("en"),
 });
 
 // POST /api/admin/students
