@@ -34,3 +34,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Local AI coding tool config — not for the public repo
+.claude/
