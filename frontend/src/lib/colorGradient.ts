@@ -1,7 +1,7 @@
 // Playful multi-color step progress — not a data chart, so the dataviz skill's
 // "sequential = one hue" rule doesn't apply here; this is deliberately a rainbow.
 // Shared by the assessment's question progress and My Learning's self-paced stepper.
-export const PROGRESS_GRADIENT = ["#ef4444", "#14b8a6", "#f97316", "#eab308", "#22c55e"]; // red -> teal -> orange -> yellow -> green
+export const PROGRESS_GRADIENT = ["#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e"]; // red -> orange -> yellow -> lime -> green
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);

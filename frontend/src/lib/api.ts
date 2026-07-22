@@ -1,7 +1,8 @@
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, type User } from "firebase/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const isPreview = typeof window !== "undefined" && window.location.hostname.includes("preview.cloudshell.dev");
+const API_URL = isPreview ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
 
 // Firebase restores a persisted session asynchronously — on a fresh page
 // load, auth.currentUser can briefly be null even though the user is

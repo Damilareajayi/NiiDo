@@ -117,6 +117,21 @@ const LANGUAGE_NAMES: Record<string, string> = {
   yo: "Yoruba",
   ig: "Igbo",
   fr: "French",
+  es: "Spanish",
+  pt: "Portuguese",
+  ar: "Arabic",
+  sw: "Kiswahili",
+  am: "Amharic",
+  "zh-CN": "Chinese",
+  hi: "Hindi",
+  ur: "Urdu",
+  bn: "Bengali",
+  de: "German",
+  ru: "Russian",
+  ja: "Japanese",
+  ko: "Korean",
+  tr: "Turkish",
+  id: "Indonesian",
 };
 
 export function humanizeLanguage(code: string): string | undefined {

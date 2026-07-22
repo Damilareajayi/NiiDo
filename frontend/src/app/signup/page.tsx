@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -21,10 +21,19 @@ const ROLES: { value: Role; label: string; icon: typeof User; badgeClass: string
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, loading, user, firebaseUser } = useAuth();
   const { lang } = useLang();
 
   const next = searchParams.get("next") || "/";
+
+  useEffect(() => {
+    if (loading) return;
+    if (firebaseUser && !user) {
+      router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
+    } else if (firebaseUser && user) {
+      router.replace(next);
+    }
+  }, [firebaseUser, user, loading, router, next]);
   const initialRole = (searchParams.get("role") as Role) || "student";
   const [role, setRole] = useState<Role>(
     ["student", "teacher", "admin"].includes(initialRole) ? initialRole : "student"
@@ -48,7 +57,9 @@ function SignupForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
+      const isPreview = typeof window !== "undefined" && window.location.hostname.includes("preview.cloudshell.dev");
+      const apiUrl = isPreview ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
+      const res = await fetch(`${apiUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -275,7 +286,9 @@ function SignupForm() {
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-                  {error}
+                  {error.includes("unauthorized-domain")
+                    ? "Authentication is temporarily unavailable on this domain. Please contact support or try signing up with your email and password."
+                    : error}
                 </div>
               )}
 

@@ -211,7 +211,7 @@ export default function MyLearningPage() {
             <FadeIn className="card p-6 md:p-8 text-center">
               <CheckCircle2 className="w-10 h-10 text-brand-500 mx-auto mb-3" />
               <h3 className="font-display font-semibold text-stone-900 text-lg mb-1">Nice work!</h3>
-              <p className="text-sm text-stone-500 mb-6">You've been through the whole lesson at your own pace.</p>
+              <p className="text-sm text-stone-500 mb-6">You&apos;ve been through the whole lesson at your own pace.</p>
               <div className="flex gap-3">
                 <button className="btn-outline flex-1" onClick={() => setStep(0)}>
                   Review Again

@@ -7,6 +7,7 @@ import {
   generateLessonViaEduPrompt,
   humanizeGrade,
   humanizeSubject,
+  humanizeLanguage,
 } from "../services/eduprompt";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole } from "../middleware/auth";
@@ -20,7 +21,11 @@ const LessonSchema = z.object({
   duration:          z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(80)]),
   trackDistribution: z.record(z.string(), z.number()).optional().default({}),
   totalStudents:     z.number().min(1).max(200).optional().default(30),
-  language:          z.enum(["en", "ha", "yo", "ig", "fr"]).optional().default("en"),
+  language:          z.string().optional(),
+  curriculum:        z.string().optional(),
+  style:             z.string().optional(),
+  detail:            z.string().optional(),
+  classSize:         z.string().optional(),
 });
 
 // POST /api/teach/generate
@@ -32,22 +37,33 @@ teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), asyn
     let provider: string;
     let contentType: "markdown" | "structured";
 
+    // Convert language code (en/ha/yo/ig/fr) to full name if needed, or default to English
+    let targetLanguage = data.language || "English";
+    const humanizedLang = humanizeLanguage(targetLanguage);
+    if (humanizedLang) {
+      targetLanguage = humanizedLang;
+    }
+
     try {
       if (!eduPromptConfigured) throw new Error("EduPrompt not configured");
       const { lesson: markdown, provider: eduProvider } = await generateLessonViaEduPrompt({
         subject:    humanizeSubject(data.subject),
         grade:      humanizeGrade(data.grade),
         topic:      data.topic,
-        // No curriculum pinned — NiiDo serves schools across many curricula, so this
-        // uses EduPrompt's own hybrid default rather than assuming Nigeria's NERDC.
-        classSize:  `~${data.totalStudents} students`,
-        detail:     "standard",
+        curriculum: data.curriculum,
+        language:   targetLanguage,
+        style:      data.style as any,
+        detail:     data.detail as any,
+        classSize:  data.classSize || `~${data.totalStudents} students`,
       });
       lesson = { markdown, provider: eduProvider };
       provider = eduProvider;
       contentType = "markdown";
     } catch (eduErr) {
       console.error("EduPrompt generation failed, falling back to Gemini:", eduErr instanceof Error ? eduErr.message : eduErr);
+      const geminiLang = ["en", "ha", "yo", "ig", "fr"].includes(data.language || "")
+        ? (data.language as any)
+        : "en";
       lesson = await generateLessonPlan({
         subject:           data.subject as any,
         topic:             data.topic,
@@ -55,7 +71,7 @@ teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), asyn
         duration:          data.duration,
         trackDistribution: data.trackDistribution as any,
         totalStudents:     data.totalStudents,
-        language:          data.language,
+        language:          geminiLang,
       });
       provider = "gemini";
       contentType = "structured";

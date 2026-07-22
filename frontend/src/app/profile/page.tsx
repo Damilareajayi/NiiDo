@@ -85,7 +85,7 @@ function StudentProfile() {
             <p className="text-stone-400 text-sm">Loading...</p>
           ) : !profile ? (
             <p className="text-stone-500 text-sm">
-              You haven't completed NiiDo Read yet.{" "}
+              You haven&apos;t completed NiiDo Read yet.{" "}
               <a href="/student/read" className="text-coral-600 font-medium">Start your assessment</a>
             </p>
           ) : (

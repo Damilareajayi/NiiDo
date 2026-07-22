@@ -11,6 +11,80 @@ import { GraduationCap, Loader2, Sparkles } from "lucide-react";
 
 const DURATIONS = [30, 45, 60, 80] as const;
 
+const CURRICULA = [
+  { value: "All African Curricula (Hybrid)", label: "All / Hybrid (default) 🌍" },
+  { value: "Nigerian NERDC", label: "Nigeria -- NERDC 🇳🇬" },
+  { value: "Kenyan CBC", label: "Kenya -- CBC 🇰🇪" },
+  { value: "Ghanaian NaCCA", label: "Ghana -- NaCCA 🇬🇭" },
+  { value: "South African CAPS", label: "South Africa -- CAPS 🇿🇦" },
+  { value: "Ugandan NCDC", label: "Uganda -- NCDC 🇺🇬" },
+  { value: "Tanzanian NECTA", label: "Tanzania -- NECTA 🇹🇿" },
+  { value: "Rwandan REB", label: "Rwanda -- REB 🇷🇼" },
+  { value: "Ethiopian MOE", label: "Ethiopia -- MOE 🇪🇹" },
+  { value: "Cambridge International (IGCSE/A-Level)", label: "Cambridge -- IGCSE / A-Level 🌍" },
+  { value: "International Baccalaureate (IB)", label: "International Baccalaureate (IB) 🌐" },
+  { value: "American Common Core Curriculum", label: "American -- Common Core 🇺🇸" },
+  { value: "British National Curriculum", label: "British National Curriculum 🇬🇧" },
+  { value: "Montessori Framework", label: "Montessori Framework 🏫" },
+  { value: "WAEC/WASSCE Curriculum", label: "WAEC / WASSCE 📋" },
+];
+
+const LANGUAGES = [
+  { value: "English", label: "English" },
+  { value: "French", label: "Français (French)" },
+  { value: "Spanish", label: "Español (Spanish)" },
+  { value: "Portuguese", label: "Português (Portuguese)" },
+  { value: "Arabic", label: "العربية (Arabic)" },
+  { value: "Kiswahili", label: "Kiswahili" },
+  { value: "Hausa", label: "Hausa" },
+  { value: "Yoruba", label: "Yoruba" },
+  { value: "Igbo", label: "Igbo" },
+  { value: "Amharic", label: "Amharic" },
+  { value: "Chinese", label: "中文 (Chinese)" },
+  { value: "Hindi", label: "हिन्दी (Hindi)" },
+  { value: "Urdu", label: "اردو (Urdu)" },
+  { value: "Bengali", label: "বাংলা (Bengali)" },
+  { value: "German", label: "Deutsch (German)" },
+  { value: "Russian", label: "Русский (Russian)" },
+  { value: "Japanese", label: "日本語 (Japanese)" },
+  { value: "Korean", label: "한국어 (Korean)" },
+  { value: "Turkish", label: "Türkçe (Turkish)" },
+  { value: "Indonesian", label: "Bahasa Indonesia" },
+  { value: "Nigerian Pidgin English", label: "Nigerian Pidgin" },
+  { value: "Zulu", label: "Zulu" },
+  { value: "Afrikaans", label: "Afrikaans" },
+  { value: "Twi", label: "Twi (Akan)" },
+];
+
+const STYLES = [
+  { value: "standard", label: "Standard Lesson Plan" },
+  { value: "activity", label: "Activity-Heavy (Group Work)" },
+  { value: "visual", label: "Visual & Diagram-Rich" },
+  { value: "quiz", label: "Quiz & Assessment Focus" },
+  { value: "exam", label: "Exam Prep (Terminal Classes)" },
+  { value: "mapping", label: "Concept Mapping Activity" },
+];
+
+const DETAILS = [
+  { value: "standard", label: "Standard (Recommended)" },
+  { value: "short", label: "Short & Quick (1-pager)" },
+  { value: "detailed", label: "Detailed & Comprehensive" },
+];
+
+const CLASS_SIZES = [
+  { value: "~40 students", label: "Average (~40 students)" },
+  { value: "small class of ~20 students", label: "Small (~20 students)" },
+  { value: "large class of 60+ students", label: "Large (60+ students)" },
+];
+
+const LANG_MAP: Record<string, string> = {
+  en: "English",
+  ha: "Hausa",
+  yo: "Yoruba",
+  ig: "Igbo",
+  fr: "French",
+};
+
 export default function TeachPage() {
   const { t, lang } = useLang();
 
@@ -18,6 +92,13 @@ export default function TeachPage() {
   const [topic, setTopic] = useState("");
   const [grade, setGrade] = useState<Grade | "">("");
   const [duration, setDuration] = useState<typeof DURATIONS[number]>(45);
+  
+  const [curriculum, setCurriculum] = useState("All African Curricula (Hybrid)");
+  const [outputLanguage, setOutputLanguage] = useState(LANG_MAP[lang] || "English");
+  const [style, setStyle] = useState("standard");
+  const [detail, setDetail] = useState("standard");
+  const [classSize, setClassSize] = useState("~40 students");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lesson, setLesson] = useState<LessonContent | null>(null);
@@ -35,7 +116,11 @@ export default function TeachPage() {
           topic,
           grade,
           duration,
-          language: lang,
+          language: outputLanguage,
+          curriculum,
+          style,
+          detail,
+          classSize,
         }),
       });
       if (!res.ok) throw new Error("Lesson generation failed");
@@ -117,6 +202,73 @@ export default function TeachPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Curriculum</label>
+                <select
+                  className="input"
+                  value={curriculum}
+                  onChange={(e) => setCurriculum(e.target.value)}
+                >
+                  {CURRICULA.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Output Language</label>
+                <select
+                  className="input"
+                  value={outputLanguage}
+                  onChange={(e) => setOutputLanguage(e.target.value)}
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.value} value={l.value}>{l.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Lesson Style</label>
+                <select
+                  className="input"
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                >
+                  {STYLES.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Detail Level</label>
+                <select
+                  className="input"
+                  value={detail}
+                  onChange={(e) => setDetail(e.target.value)}
+                >
+                  {DETAILS.map((d) => (
+                    <option key={d.value} value={d.value}>{d.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Class Size</label>
+              <select
+                className="input"
+                value={classSize}
+                onChange={(e) => setClassSize(e.target.value)}
+              >
+                {CLASS_SIZES.map((cs) => (
+                  <option key={cs.value} value={cs.value}>{cs.label}</option>
+                ))}
+              </select>
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
                 {error}
@@ -150,6 +302,10 @@ export default function TeachPage() {
                   <h2 className="text-lg font-display font-semibold text-stone-900">
                     {SUBJECTS.find((s) => s.value === subject)?.label} · {GRADES.find((g) => g.value === grade)?.label} · {duration} {t.teach.minutes}
                   </h2>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="badge-read text-xs font-semibold">{curriculum}</span>
+                    <span className="badge-teach text-xs font-semibold">{outputLanguage}</span>
+                  </div>
                 </div>
               </div>
             </div>

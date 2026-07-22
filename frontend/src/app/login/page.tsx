@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -13,11 +13,20 @@ import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Eye, EyeOff, Loader2, Phone, Mail } from "lucide-react";
 
 function LoginForm() {
-  const { login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error } = useAuth();
+  const { login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user } = useAuth();
   const { t } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
+
+  useEffect(() => {
+    if (loading) return;
+    if (firebaseUser && !user) {
+      router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
+    } else if (firebaseUser && user) {
+      router.replace(next);
+    }
+  }, [firebaseUser, user, loading, router, next]);
 
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
@@ -250,6 +259,8 @@ function LoginForm() {
                     >
                       {error.includes("invalid-credential")
                         ? "Incorrect email or password. Please try again."
+                        : error.includes("unauthorized-domain")
+                        ? "Authentication is temporarily unavailable on this domain. Please contact support or try logging in with your email and password."
                         : error}
                     </motion.div>
                   )}

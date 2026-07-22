@@ -19,11 +19,16 @@ import "./firebase";
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
+// Enable trust proxy for express-rate-limit to work behind Cloud Run load balancers
+app.set("trust proxy", 1);
+
 // ── Security middleware ──────────────────────
 app.use(helmet());
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || "http://localhost:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    process.env.FRONTEND_URL || "https://niido.learnscape.africa",
     "https://niido.learnscape.africa",
   ],
   credentials: true,

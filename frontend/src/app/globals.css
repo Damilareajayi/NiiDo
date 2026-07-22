@@ -150,16 +150,37 @@
    lib/googleTranslate.ts). Just suppress the top banner iframe Google
    still injects into the page when a translation is active, which
    would otherwise push the whole page down. */
-.goog-te-banner-frame.skiptranslate {
+html {
+  margin-top: 0 !important;
+}
+body {
+  top: 0 !important;
+  position: static !important;
+}
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner,
+#goog-te-banner-frame,
+iframe.goog-te-banner-frame,
+iframe.skiptranslate,
+iframe[id*=":0.container"] {
   display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  opacity: 0 !important;
+}
+/* Suppress original text popup/tooltip on hover */
+#goog-gt-tt,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
 }
 /* Google highlights each translated span on hover with a background/tooltip
    showing the original text — remove that so hovering any text behaves
    normally instead of popping up a translation box everywhere. */
 .goog-text-highlight {
-  background: none !important;
+  background: transparent !important;
   box-shadow: none !important;
-}
-body {
-  top: 0 !important;
 }

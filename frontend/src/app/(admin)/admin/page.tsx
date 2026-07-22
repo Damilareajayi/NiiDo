@@ -60,7 +60,7 @@ export default function AdminDashboard() {
             {getGreeting()}, {user?.name?.split(" ")[0]}
           </h1>
           <p className="text-stone-500 mt-1">
-            Real-time overview of your school's learning activity.
+            Real-time overview of your school&apos;s learning activity.
           </p>
         </div>
       </FadeIn>
@@ -71,10 +71,10 @@ export default function AdminDashboard() {
             <img src="/mascot/mascot-waving.png" alt="" className="w-20 h-auto shrink-0" />
             <div className="flex-1">
               <h2 className="text-lg font-display font-semibold text-stone-900">
-                Add teachers and students to unlock your school's Pulse dashboard
+                Add teachers and students to unlock your school&apos;s Pulse dashboard
               </h2>
               <p className="text-stone-500 text-sm mt-1 leading-relaxed">
-                Once your school has at least 2 students, you'll see real-time learning-style
+                Once your school has at least 2 students, you&apos;ll see real-time learning-style
                 breakdowns, assessment progress, and support needs here.
               </p>
             </div>

@@ -3,7 +3,27 @@
 // ============================================
 
 export type UserRole = "student" | "teacher" | "admin";
-export type Language = "en" | "ha" | "yo" | "ig" | "fr";
+export type Language =
+  | "en"
+  | "fr"
+  | "es"
+  | "pt"
+  | "ar"
+  | "sw"
+  | "ha"
+  | "yo"
+  | "ig"
+  | "am"
+  | "zh-CN"
+  | "hi"
+  | "ur"
+  | "bn"
+  | "de"
+  | "ru"
+  | "ja"
+  | "ko"
+  | "tr"
+  | "id";
 export type LearningTrack =
   | "visual"
   | "auditory"

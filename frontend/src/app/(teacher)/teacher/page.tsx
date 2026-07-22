@@ -49,7 +49,7 @@ export default function TeacherDashboard() {
           <h1 className="text-2xl md:text-3xl font-display font-bold text-stone-900">
             {getGreeting()}, {user?.name?.split(" ")[0]} 👩‍🏫
           </h1>
-          <p className="text-stone-500 mt-1">Here's what's happening in your classroom today.</p>
+          <p className="text-stone-500 mt-1">Here&apos;s what&apos;s happening in your classroom today.</p>
         </div>
       </FadeIn>
 
@@ -71,7 +71,7 @@ export default function TeacherDashboard() {
                 Add your first students to unlock your class dashboard
               </h2>
               <p className="text-stone-500 text-sm mt-1 leading-relaxed">
-                Once you have at least 2 students, you'll see class-wide stats, learning-track
+                Once you have at least 2 students, you&apos;ll see class-wide stats, learning-track
                 breakdowns, and assessment progress here.
               </p>
             </div>

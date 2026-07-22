@@ -73,8 +73,8 @@ export default function SettingsPage() {
               </div>
               <p className="text-stone-400 text-xs mb-4">
                 The language NiiDo writes lesson plans, generated content, and WhatsApp
-                messages in. To translate what's on screen into another language, use the
-                "Select Language" menu in the top corner instead.
+                messages in. To translate what&apos;s on screen into another language, use the
+                &quot;Select Language&quot; menu in the top corner instead.
               </p>
               <div className="flex flex-wrap gap-2">
                 {LANGS.map((l) => (

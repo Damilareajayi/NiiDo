@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Globe2, Check } from "lucide-react";
-import { setSiteLanguage, getCurrentSiteLanguage } from "@/lib/googleTranslate";
+import { useLang } from "@/hooks/useLang";
+import { Language } from "@/types";
 
 // Each language labeled in its own script, so it's recognizable even to
 // someone who can't read English — the whole point of offering it.
@@ -31,16 +32,11 @@ const LANGUAGES = [
 
 // A clean, fully custom "Select Language" control — floats bottom-right,
 // a corner nothing else in the app ever occupies, so it never collides with
-// page content. Visually it's entirely ours; Google's own widget is hidden
-// (see GoogleTranslate.tsx) and only does the actual translating underneath.
+// page content. Visually it's entirely ours.
 export function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState("en");
+  const { lang, setLang } = useLang();
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setCurrent(getCurrentSiteLanguage());
-  }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -51,10 +47,11 @@ export function LanguageSwitcher() {
   }, []);
 
   const select = (code: string) => {
-    setCurrent(code);
+    setLang(code as Language);
     setOpen(false);
-    setSiteLanguage(code);
   };
+
+  const currentLabel = LANGUAGES.find((l) => l.code === lang)?.label || "Select Language";
 
   return (
     <div ref={ref} className="fixed bottom-5 right-5 z-50">
@@ -66,10 +63,10 @@ export function LanguageSwitcher() {
               type="button"
               onClick={() => select(l.code)}
               className={`w-full flex items-center justify-between gap-2 px-4 py-2 text-sm text-left hover:bg-stone-50 transition-colors
-                ${current === l.code ? "text-brand-700 font-medium" : "text-stone-700"}`}
+                ${lang === l.code ? "text-brand-700 font-medium" : "text-stone-700"}`}
             >
               {l.label}
-              {current === l.code && <Check className="w-4 h-4 text-brand-500 shrink-0" />}
+              {lang === l.code && <Check className="w-4 h-4 text-brand-500 shrink-0" />}
             </button>
           ))}
         </div>
@@ -79,12 +76,11 @@ export function LanguageSwitcher() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 bg-white border border-stone-200 shadow-md rounded-full pl-3 pr-4 py-2.5
-                   text-sm font-medium text-stone-700 hover:shadow-lg transition-shadow notranslate"
-        translate="no"
+                   text-sm font-medium text-stone-700 hover:shadow-lg transition-shadow"
         aria-label="Select language"
       >
         <Globe2 className="w-4 h-4 text-brand-500" />
-        Select Language
+        {currentLabel}
       </button>
     </div>
   );

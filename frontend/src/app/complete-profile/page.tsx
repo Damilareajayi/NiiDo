@@ -84,7 +84,7 @@ function CompleteProfileForm() {
             <img src="/mascot/mascot-waving.png" alt="" className="w-20 h-auto mx-auto mb-3" />
             <h1 className="text-2xl font-display font-bold text-stone-900">One more step</h1>
             <p className="text-stone-500 mt-1 text-sm">
-              You're signed in as {firebaseUser?.email || firebaseUser?.phoneNumber} — tell us who you are
+              You&apos;re signed in as {firebaseUser?.email || firebaseUser?.phoneNumber} — tell us who you are
             </p>
           </div>
 

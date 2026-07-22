@@ -78,7 +78,7 @@ export default function AssessmentResultsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
         <img src="/mascot/mascot-waving.png" alt="" className="w-20 h-auto" />
-        <p className="text-stone-600 font-medium">We couldn't find a completed assessment for you yet.</p>
+        <p className="text-stone-600 font-medium">We couldn&apos;t find a completed assessment for you yet.</p>
         <a href="/assessment" className="btn-coral">Take the Assessment</a>
       </div>
     );

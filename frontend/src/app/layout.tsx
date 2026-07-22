@@ -3,7 +3,6 @@ import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LangProvider } from "@/hooks/useLang";
-import { GoogleTranslate } from "@/components/layout/GoogleTranslate";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export const metadata: Metadata = {
@@ -24,10 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-body antialiased bg-stone-50 text-stone-900">
-        <GoogleTranslate />
-        <LanguageSwitcher />
         <AuthProvider>
           <LangProvider>
+            <LanguageSwitcher />
             {children}
           </LangProvider>
         </AuthProvider>

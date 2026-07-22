@@ -14,7 +14,7 @@ const AnalyseSchema = z.object({
     indicatorType: z.string(),
     timeSpent:     z.number(),
   })),
-  age:        z.number().min(4).max(20),
+  age:        z.number().min(4).max(99),
   grade:      z.string(),
   language:   z.enum(["en", "ha", "yo", "ig", "fr"]),
 });

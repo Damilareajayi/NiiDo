@@ -85,7 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle = async () => {
     setError(null);
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
+      const result = await signInWithPopup(auth, provider);
       const hasProfile = await checkHasProfile(result.user.uid);
       return { hasProfile };
     } catch (err: unknown) {

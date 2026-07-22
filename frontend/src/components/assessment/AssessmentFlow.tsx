@@ -69,10 +69,15 @@ export function AssessmentFlow({ mode }: { mode: "authenticated" | "public" }) {
   useEffect(() => {
     if (stage !== "about" && stage !== "questions") return;
     if (questions.length > 0) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/read/questions`)
+    const isPreview = typeof window !== "undefined" && window.location.hostname.includes("preview.cloudshell.dev");
+    const apiUrl = isPreview ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
+    fetch(`${apiUrl}/api/read/questions`)
       .then((r) => r.json())
       .then((d) => setQuestions(d.questions || []))
-      .catch(() => setError("Could not load the assessment. Please try again."));
+      .catch(() => {
+        setError("Could not load the assessment. Please try again.");
+        setStage("error");
+      });
   }, [stage, questions.length]);
 
   const milestoneIndices = questions.length
@@ -228,7 +233,7 @@ export function AssessmentFlow({ mode }: { mode: "authenticated" | "public" }) {
       );
     }
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto" key={current}>
         <div className="flex items-center gap-3 mb-8">
           <img src="/mascot/mascot-reading.png" alt="" className="w-9 h-auto shrink-0" />
           <div
@@ -252,38 +257,29 @@ export function AssessmentFlow({ mode }: { mode: "authenticated" | "public" }) {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current}
-            className="card p-6 md:p-8"
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-          >
-            <h2 className="text-lg font-display font-semibold text-stone-900 mb-6">{q.text}</h2>
-            <div className="space-y-3">
-              {q.options.map((opt) => {
-                const Icon = INDICATOR_ICONS[opt.indicator] || Sparkles;
-                return (
-                  <motion.button
-                    key={opt.label}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => selectOption(opt)}
-                    className="w-full flex items-center gap-3 text-left px-5 py-4 rounded-xl border border-stone-200
-                               hover:border-coral-400 hover:bg-coral-50 transition-all duration-150
-                               text-stone-700 font-medium"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-coral-50 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-coral-500" />
-                    </div>
-                    {opt.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        <div className="card p-6 md:p-8 transition-all duration-200">
+          <h2 className="text-lg font-display font-semibold text-stone-900 mb-6">{q.text}</h2>
+          <div className="space-y-3">
+            {q.options.map((opt) => {
+              const Icon = INDICATOR_ICONS[opt.indicator] || Sparkles;
+              return (
+                <button
+                  key={opt.label}
+                  onClick={() => selectOption(opt)}
+                  className="w-full flex items-center gap-3 text-left px-5 py-4 rounded-xl border border-stone-200
+                             hover:border-coral-400 hover:bg-coral-50 transition-all duration-150
+                             active:scale-[0.98] transform-gpu
+                             text-stone-700 font-medium"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-coral-50 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-coral-500" />
+                  </div>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }
