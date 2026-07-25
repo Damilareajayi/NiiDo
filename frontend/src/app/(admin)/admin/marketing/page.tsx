@@ -159,14 +159,14 @@ export default function MarketingPage() {
                     <input className="input" required value={parentName} onChange={(e) => setParentName(e.target.value)} placeholder="e.g. Mrs. Adebayo" />
                   </div>
                   <div>
-                    <label className="label">Child's Name</label>
+                    <label className="label">Child&apos;s Name</label>
                     <input className="input" required value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="e.g. Tunde" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="label">Child's Cognitive Style</label>
+                    <label className="label">Child&apos;s Cognitive Style</label>
                     <select className="input" value={primaryTrack} onChange={(e) => setPrimaryTrack(e.target.value)}>
                       <option value="visual">Visual (Charts, Pictures)</option>
                       <option value="auditory">Auditory (Explanation, Rhymes)</option>
