@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import twilio from "twilio";
-import { generateLessonPlan, generateParentMessage, generatePracticeQuestion, gradePracticeAnswer } from "../services/gemini";
+import { TutorAgent } from "../services/agents/TutorAgent";
+import { CopilotAgent } from "../services/agents/CopilotAgent";
 import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeSubject } from "../services/eduprompt";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { db, Timestamp } from "../firebase";
@@ -31,9 +32,13 @@ function replyTwiml(res: Response, message: string) {
   res.type("text/xml").send(twiml.toString());
 }
 
+const twilioWebhookMiddleware = twilioConfigured
+  ? twilio.webhook({ validate: true })
+  : (req: Request, res: Response, next: any) => next();
+
 // POST /api/whatsapp/webhook
 // Receives incoming WhatsApp messages via Twilio and auto-replies with TwiML
-whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
+whatsappRouter.post("/webhook", twilioWebhookMiddleware, async (req: Request, res: Response) => {
   try {
     const body    = req.body;
     const from    = body.From || body.from || "";
@@ -44,7 +49,7 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
     if (isPracticeRequest(message)) {
       const parsed = parsePracticeRequest(message);
       if (parsed) {
-        const { question, correctAnswer } = await generatePracticeQuestion(parsed);
+        const { question, correctAnswer } = await TutorAgent.generatePracticeQuestion(parsed);
         await savePendingSession(from, { subject: parsed.subject, topic: parsed.topic, question, correctAnswer });
         return replyTwiml(res, `📝 *Practice: ${parsed.topic}*\n\n${question}\n\n_Reply with your answer!_`);
       }
@@ -54,7 +59,7 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
     const pending = await getPendingSession(from);
     if (pending) {
       await clearPendingSession(from);
-      const { correct, feedback } = await gradePracticeAnswer({
+      const { correct, feedback } = await TutorAgent.gradePracticeAnswer({
         question: pending.question,
         correctAnswer: pending.correctAnswer,
         studentAnswer: body.Body || body.body || "",
@@ -81,7 +86,7 @@ whatsappRouter.post("/webhook", async (req: Request, res: Response) => {
           return replyTwiml(res, formatMarkdownLessonForWhatsApp(markdown, parsed));
         } catch (eduErr) {
           console.error("EduPrompt WhatsApp generation failed, falling back to Gemini:", eduErr instanceof Error ? eduErr.message : eduErr);
-          const lesson = await generateLessonPlan({
+          const lesson = await CopilotAgent.generateLessonPlan({
             subject:           parsed.subject as any,
             topic:             parsed.topic,
             grade:             parsed.grade as any,
@@ -114,7 +119,7 @@ whatsappRouter.post("/notify-parent", requireAuth, requireRole("teacher", "admin
   try {
     const { studentName, primaryTrack, supportLevel, parentNote, language, parentPhone } = req.body;
 
-    const message = await generateParentMessage({
+    const message = await TutorAgent.generateParentMessage({
       studentName,
       primaryTrack,
       supportLevel,
@@ -196,9 +201,12 @@ function parseLessonRequest(msg: string) {
   const duration = durationMatch ? parseInt(durationMatch[1]) as 30|45|60|80 : 45;
 
   // Extract topic (remaining words after grade and subject)
+  const gradePattern = gradeMatch ? gradeMatch[1] : "";
+  const subjectPattern = subject.replace("_", " ");
+
   const cleaned = msg
-    .replace(grade, "")
-    .replace(subject.replace("_", ""), "")
+    .replace(new RegExp(gradePattern, "i"), "")
+    .replace(new RegExp(subjectPattern, "i"), "")
     .replace(/\d+/g, "")
     .trim();
 

@@ -19,7 +19,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { NiiDoUser } from "@/types";
 
@@ -50,25 +50,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+    let unsubscribeDoc: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (fbUser) => {
       setFirebaseUser(fbUser);
+      
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+
       if (fbUser) {
-        try {
-          const userDoc = await getDoc(doc(db, "users", fbUser.uid));
-          if (userDoc.exists()) {
-            setUser({ uid: fbUser.uid, ...userDoc.data() } as NiiDoUser);
+        unsubscribeDoc = onSnapshot(doc(db, "users", fbUser.uid), (docSnap) => {
+          if (docSnap.exists()) {
+            setUser({ uid: fbUser.uid, ...docSnap.data() } as NiiDoUser);
           } else {
             setUser(null);
           }
-        } catch (err) {
-          console.error("Error fetching user profile:", err);
-        }
+          setLoading(false);
+        }, (err) => {
+          console.error("Error listening to user profile:", err);
+          setLoading(false);
+        });
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {

@@ -59,7 +59,7 @@ CRITICAL RULES — these are non-negotiable, not stylistic suggestions:
 `;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -132,7 +132,7 @@ Return ONLY the JSON object, no other text.
 `;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -173,10 +173,10 @@ Return ONLY the JSON object.
 
   try {
     const visionModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await visionModel.generateContent([
-      prompt,
-      { inlineData: { data: imageBase64, mimeType } },
-    ]);
+    const result = await visionModel.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { data: imageBase64, mimeType } }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -288,7 +288,7 @@ Return ONLY the JSON object, no other text.
 `;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -323,7 +323,7 @@ Return a JSON object with exactly these fields:
 Return ONLY the JSON object, no other text.
 `;
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -355,7 +355,7 @@ Return a JSON object with exactly these fields:
 Return ONLY the JSON object, no other text.
 `;
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } });
     const text = result.response.text();
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);

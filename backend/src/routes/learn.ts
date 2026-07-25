@@ -1,7 +1,7 @@
 // ── NiiDo My Learning Route — self-paced, self-guided content for one student ──
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { generateLearningContent } from "../services/gemini";
+import { TutorAgent } from "../services/agents/TutorAgent";
 import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeLanguage } from "../services/eduprompt";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole, requirePremium } from "../middleware/auth";
@@ -79,7 +79,7 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
       contentType = "markdown";
     } catch (eduErr) {
       console.error("EduPrompt generation failed, falling back to Gemini:", eduErr instanceof Error ? eduErr.message : eduErr);
-      const content = await generateLearningContent({
+      const content = await TutorAgent.generateLearningContent({
         studentName:    req.authUser!.name || "there",
         subject:        data.subject,
         topic:          data.topic,

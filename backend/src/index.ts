@@ -85,7 +85,7 @@ app.use("/api/read",     aiLimiter, readRouter);
 app.use("/api/teach",    aiLimiter, teachRouter);
 app.use("/api/pulse",    pulseRouter);
 app.use("/api/upload",   uploadRouter);
-app.use("/api/whatsapp", whatsappRouter);
+app.use("/api/whatsapp", aiLimiter, whatsappRouter);
 app.use("/api/admin",    adminRouter);
 app.use("/api/teacher",  teacherRouter);
 app.use("/api/auth",     signupLimiter, authRouter);

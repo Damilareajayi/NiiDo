@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
 import { z } from "zod";
-import { extractStudentsFromImage } from "../services/gemini";
+import { CopilotAgent } from "../services/agents/CopilotAgent";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { createStudentAccount } from "../services/accounts";
 
@@ -27,7 +27,7 @@ uploadRouter.post("/register-photo", upload.single("file"), async (req: Request,
       return res.status(400).json({ error: "No file uploaded" });
     }
     const base64 = req.file.buffer.toString("base64");
-    const result = await extractStudentsFromImage(base64, req.file.mimetype);
+    const result = await CopilotAgent.extractStudentsFromImage(base64, req.file.mimetype);
     res.json({ success: true, ...result });
   } catch (err) {
     console.error("Upload error:", err);
@@ -42,16 +42,16 @@ uploadRouter.post("/csv", upload.single("file"), async (req: Request, res: Respo
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
-    const csv = req.file.buffer.toString("utf-8");
+    const csv = req.file.buffer.toString("utf-8").replace(/\r/g, "");
     const lines = csv.split("\n").filter(Boolean);
-    const headers = lines[0].toLowerCase().split(",").map((h) => h.trim());
+    const headers = lines[0].toLowerCase().split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((h) => h.replace(/^"|"$/g, "").trim());
 
     const nameIdx   = headers.findIndex((h) => h.includes("name"));
     const gradeIdx  = headers.findIndex((h) => h.includes("grade") || h.includes("class"));
     const genderIdx = headers.findIndex((h) => h.includes("gender") || h.includes("sex"));
 
     const detected = lines.slice(1).map((line) => {
-      const cols = line.split(",").map((c) => c.trim());
+      const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^"|"$/g, "").trim());
       return {
         name:      nameIdx   >= 0 ? cols[nameIdx]   : cols[0] || "",
         grade:     gradeIdx  >= 0 ? cols[gradeIdx]  : null,

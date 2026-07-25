@@ -1,7 +1,7 @@
 // ── NiiDo Teach Route ────────────────────────────────────────
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { generateLessonPlan } from "../services/gemini";
+import { CopilotAgent } from "../services/agents/CopilotAgent";
 import {
   eduPromptConfigured,
   generateLessonViaEduPrompt,
@@ -64,7 +64,7 @@ teachRouter.post("/generate", requireAuth, requireRole("teacher", "admin"), asyn
       const geminiLang = ["en", "ha", "yo", "ig", "fr"].includes(data.language || "")
         ? (data.language as any)
         : "en";
-      lesson = await generateLessonPlan({
+      lesson = await CopilotAgent.generateLessonPlan({
         subject:           data.subject as any,
         topic:             data.topic,
         grade:             data.grade as any,

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { analyseAssessment } from "../services/gemini";
+import { DiagnosticAgent } from "../services/agents/DiagnosticAgent";
 import { db, Timestamp } from "../firebase";
 import { requireAuth } from "../middleware/auth";
 
@@ -24,7 +24,7 @@ const AnalyseSchema = z.object({
 readRouter.post("/analyse", requireAuth, async (req: Request, res: Response) => {
   try {
     const data = AnalyseSchema.parse(req.body);
-    const profile = await analyseAssessment({
+    const profile = await DiagnosticAgent.analyseAssessment({
       responses: data.responses as any,
       age:       data.age,
       grade:     data.grade as any,
