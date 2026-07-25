@@ -12,6 +12,32 @@ import { COUNTRIES } from "@/lib/constants";
 import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Eye, EyeOff, Loader2, Phone, Mail } from "lucide-react";
 
+function formatAuthError(error: string): string {
+  const code = error.toLowerCase();
+  if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {
+    return "Incorrect email or password. Please double-check your credentials and try again.";
+  }
+  if (code.includes("invalid-email")) {
+    return "That email address doesn't look quite right. Please check the spelling.";
+  }
+  if (code.includes("too-many-requests")) {
+    return "Too many unsuccessful attempts. Please wait a few moments before trying again to keep your account safe.";
+  }
+  if (code.includes("user-disabled")) {
+    return "This account has been disabled. Please contact your school administrator.";
+  }
+  if (code.includes("network-request-failed")) {
+    return "Connection error. Please check your internet connection and try again.";
+  }
+  if (code.includes("invalid-verification-code") || code.includes("code-expired") || code.includes("invalid verification code")) {
+    return "The SMS verification code is incorrect or has expired. Please request a new code.";
+  }
+  if (code.includes("captcha") || code.includes("recaptcha")) {
+    return "Security verification failed. Please refresh and try again.";
+  }
+  return error;
+}
+
 function LoginForm() {
   const { login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user } = useAuth();
   const { t } = useLang();
@@ -21,10 +47,12 @@ function LoginForm() {
 
   useEffect(() => {
     if (loading) return;
-    if (firebaseUser && !user) {
-      router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
-    } else if (firebaseUser && user) {
-      router.replace(next);
+    if (firebaseUser) {
+      if (!user || !user.role || !["student", "teacher", "admin"].includes(user.role)) {
+        router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
+      } else {
+        router.replace(next);
+      }
     }
   }, [firebaseUser, user, loading, router, next]);
 
@@ -255,13 +283,9 @@ function LoginForm() {
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl"
+                      className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3.5 rounded-xl font-medium"
                     >
-                      {error.includes("invalid-credential")
-                        ? "Incorrect email or password. Please try again."
-                        : error.includes("unauthorized-domain")
-                        ? "Authentication is temporarily unavailable on this domain. Please contact support or try logging in with your email and password."
-                        : error}
+                      {formatAuthError(error)}
                     </motion.div>
                   )}
 
@@ -297,8 +321,8 @@ function LoginForm() {
                   </div>
 
                   {localError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-                      {localError}
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3.5 rounded-xl font-medium">
+                      {formatAuthError(localError)}
                     </div>
                   )}
 
@@ -327,8 +351,8 @@ function LoginForm() {
                   </div>
 
                   {localError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-                      {localError}
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3.5 rounded-xl font-medium">
+                      {formatAuthError(localError)}
                     </div>
                   )}
 

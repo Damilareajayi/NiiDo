@@ -22,6 +22,10 @@ export default function RootPage() {
 
   useEffect(() => {
     if (loading || !user) return;
+    if (!user.role || !["student", "teacher", "admin"].includes(user.role)) {
+      router.replace("/complete-profile");
+      return;
+    }
     switch (user.role) {
       case "student": router.replace("/student"); break;
       case "teacher": router.replace("/teacher"); break;
