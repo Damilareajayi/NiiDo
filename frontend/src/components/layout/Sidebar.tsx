@@ -7,7 +7,7 @@ import { useLang } from "@/hooks/useLang";
 import {
   BookOpen, Brain, GraduationCap, BarChart3,
   Users, LayoutDashboard, Settings, LogOut,
-  Upload, ClipboardList, Menu, X, UserCircle
+  Upload, ClipboardList, Menu, X, UserCircle, Sparkles
 } from "lucide-react";
 import { useState } from "react";
 
@@ -45,6 +45,7 @@ export default function Sidebar() {
     { href: "/admin/teachers",     label: t.nav.teachers,    icon: Users },
     { href: "/admin/students",     label: t.nav.students,    icon: ClipboardList },
     { href: "/admin/upload",       label: "Import Students", icon: Upload },
+    { href: "/admin/marketing",    label: "Growth & Outreach", icon: Sparkles,        badge: "NiiDo Growth" },
   ];
 
   const navItems =

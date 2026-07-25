@@ -114,3 +114,51 @@ adminRouter.get("/students", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch students" });
   }
 });
+
+import { GrowthAgent } from "../services/agents/GrowthAgent";
+
+const GrowthSchema = z.object({
+  type:             z.enum(["school-pitch", "parent-nudge"]),
+  adminName:        z.string().optional(),
+  schoolName:       z.string().optional(),
+  totalStudents:     z.number().optional(),
+  assessedCount:     z.number().optional(),
+  lessonsGenerated:  z.number().optional(),
+  primaryNeedsCount: z.number().optional(),
+  parentName:       z.string().optional(),
+  studentName:      z.string().optional(),
+  primaryTrack:     z.string().optional(),
+  completedLessons: z.number().optional(),
+});
+
+// POST /api/admin/growth-marketing
+adminRouter.post("/growth-marketing", async (req: Request, res: Response) => {
+  try {
+    const data = GrowthSchema.parse(req.body);
+    if (data.type === "school-pitch") {
+      const pitch = await GrowthAgent.generateSchoolPitch({
+        adminName:        data.adminName || "Administrator",
+        schoolName:       data.schoolName || "Our School",
+        totalStudents:     data.totalStudents || 100,
+        assessedCount:     data.assessedCount || 40,
+        lessonsGenerated:  data.lessonsGenerated || 15,
+        primaryNeedsCount: data.primaryNeedsCount || 5,
+      });
+      return res.json({ success: true, ...pitch });
+    } else {
+      const nudge = await GrowthAgent.generateParentNudge({
+        parentName:       data.parentName || "Parent",
+        studentName:      data.studentName || "Student",
+        primaryTrack:     data.primaryTrack || "Visual",
+        completedLessons: data.completedLessons || 3,
+      });
+      return res.json({ success: true, ...nudge });
+    }
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid request", details: err.errors });
+    }
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate marketing campaign" });
+  }
+});
