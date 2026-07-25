@@ -56,10 +56,68 @@ readRouter.post("/analyse", requireAuth, async (req: Request, res: Response) => 
   }
 });
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+const translationCache: Record<string, typeof ASSESSMENT_QUESTIONS> = {};
+
+async function translateQuestions(lang: string): Promise<typeof ASSESSMENT_QUESTIONS> {
+  const langNames: Record<string, string> = {
+    fr: "French", es: "Spanish", pt: "Portuguese", ar: "Arabic", sw: "Swahili",
+    ha: "Hausa", yo: "Yoruba", ig: "Igbo", am: "Amharic", "zh-CN": "Chinese",
+    hi: "Hindi", ur: "Urdu", bn: "Bengali", de: "German", ru: "Russian",
+    ja: "Japanese", ko: "Korean", tr: "Turkish", id: "Indonesian"
+  };
+
+  const targetLang = langNames[lang];
+  if (!targetLang) return ASSESSMENT_QUESTIONS;
+
+  const prompt = `
+You are an expert, context-aware educational translator.
+Translate this JSON array of assessment questions into ${targetLang} (${lang}) for NiiDo, an adaptive learning platform.
+
+Rigorously preserve:
+1. All JSON keys ("id", "section", "text", "options", "label", "indicator") and the exact array structure.
+2. The exact "id", "section", and "indicator" string values — do NOT translate these, keep them identical!
+3. Brand names: NiiDo.
+
+Only translate the "text" values and the "label" values within the options.
+Your response MUST be a 100% syntactically valid JSON array. Do not return any introduction, markdown formatting, or notes.
+
+Source English questions JSON:
+${JSON.stringify(ASSESSMENT_QUESTIONS, null, 2)}
+`;
+
+  try {
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    });
+    const text = result.response.text().trim();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error(`Failed to translate assessment questions to ${targetLang}:`, err);
+    return ASSESSMENT_QUESTIONS; // fallback to English
+  }
+}
+
 // GET /api/read/questions
-// Returns the 20 assessment questions
-readRouter.get("/questions", (_req: Request, res: Response) => {
-  res.json({ questions: ASSESSMENT_QUESTIONS });
+// Returns the 20 assessment questions, dynamically translated to the requested language
+readRouter.get("/questions", async (req: Request, res: Response) => {
+  const lang = (req.query.lang as string) || "en";
+  if (lang === "en" || !["fr", "es", "pt", "ar", "sw", "ha", "yo", "ig", "am", "zh-CN", "hi", "ur", "bn", "de", "ru", "ja", "ko", "tr", "id"].includes(lang)) {
+    return res.json({ questions: ASSESSMENT_QUESTIONS });
+  }
+
+  if (translationCache[lang]) {
+    return res.json({ questions: translationCache[lang] });
+  }
+
+  const translated = await translateQuestions(lang);
+  translationCache[lang] = translated;
+  res.json({ questions: translated });
 });
 
 // ── Assessment Questions ──────────────────────────────────────

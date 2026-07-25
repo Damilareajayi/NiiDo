@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ProtectedLayout from "@/components/layout/ProtectedLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -211,6 +211,48 @@ function SchoolProfile() {
   );
 }
 
+function RoleSwitcher() {
+  const { user } = useAuth();
+  const [updating, setUpdating] = useState(false);
+
+  const handleRoleChange = async (newRole: "student" | "teacher" | "admin") => {
+    if (!user?.uid || updating) return;
+    setUpdating(true);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { role: newRole });
+    } catch (err) {
+      console.error("Error updating role:", err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return (
+    <FadeIn delay={0.2} className="card p-6 mt-6 max-w-2xl mx-auto">
+      <h2 className="font-semibold text-stone-900 mb-2">Switch Portal View</h2>
+      <p className="text-stone-400 text-xs mb-4">
+        Need to switch between student, teacher, or school administrator dashboards? Change your profile role here to update your dashboard layout.
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {(["student", "teacher", "admin"] as const).map((r) => (
+          <button
+            key={r}
+            type="button"
+            disabled={updating}
+            onClick={() => handleRoleChange(r)}
+            className={`py-2.5 px-3 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all
+              ${user?.role === r 
+                ? "bg-stone-900 border-stone-900 text-white shadow-sm" 
+                : "border-stone-200 text-stone-600 hover:bg-stone-50"}`}
+          >
+            {r === "admin" ? "Admin" : r}
+          </button>
+        ))}
+      </div>
+    </FadeIn>
+  );
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
 
@@ -219,6 +261,7 @@ export default function ProfilePage() {
       {user?.role === "student" && <StudentProfile />}
       {user?.role === "teacher" && <TeacherProfile />}
       {user?.role === "admin" && <SchoolProfile />}
+      <RoleSwitcher />
     </ProtectedLayout>
   );
 }

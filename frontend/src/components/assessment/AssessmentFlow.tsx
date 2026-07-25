@@ -71,7 +71,7 @@ export function AssessmentFlow({ mode }: { mode: "authenticated" | "public" }) {
     if (questions.length > 0) return;
     const isPreview = typeof window !== "undefined" && window.location.hostname.includes("preview.cloudshell.dev");
     const apiUrl = isPreview ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
-    fetch(`${apiUrl}/api/read/questions`)
+    fetch(`${apiUrl}/api/read/questions?lang=${lang}`)
       .then((r) => r.json())
       .then((d) => setQuestions(d.questions || []))
       .catch(() => {
