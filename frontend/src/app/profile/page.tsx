@@ -215,6 +215,9 @@ function RoleSwitcher() {
   const { user } = useAuth();
   const [updating, setUpdating] = useState(false);
 
+  // Exclusively restrict this tool to the platform owner/developer account
+  if (user?.email !== "ajayidamilarefelix@gmail.com") return null;
+
   const handleRoleChange = async (newRole: "student" | "teacher" | "admin") => {
     if (!user?.uid || updating) return;
     setUpdating(true);
