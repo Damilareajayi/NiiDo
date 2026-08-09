@@ -93,6 +93,14 @@ function SignupForm() {
       const { hasProfile } = await loginWithGoogle();
       router.push(hasProfile ? next : `/complete-profile?next=${encodeURIComponent(next)}`);
     } catch (err) {
+      // This email already has a password account — hand off to /login,
+      // where useAuth's googleLinkEmail state (already set by loginWithGoogle)
+      // drives the password-to-link form. AuthProvider lives above this page
+      // in the layout, so that state survives the client-side navigation.
+      if (err instanceof Error && err.message === "account-link-required") {
+        router.push(`/login?next=${encodeURIComponent(next)}`);
+        return;
+      }
       setError(err instanceof Error ? err.message : "Google sign-in failed");
     } finally {
       setSubmitting(false);

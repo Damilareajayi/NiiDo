@@ -39,7 +39,10 @@ function formatAuthError(error: string): string {
 }
 
 function LoginForm() {
-  const { login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user } = useAuth();
+  const {
+    login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user,
+    googleLinkEmail, linkGoogleAccount, cancelGoogleLink,
+  } = useAuth();
   const { t } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -67,6 +70,7 @@ function LoginForm() {
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [linkPassword, setLinkPassword] = useState("");
 
   const afterAuth = (hasProfile: boolean) => {
     router.push(hasProfile ? next : `/complete-profile?next=${encodeURIComponent(next)}`);
@@ -90,6 +94,22 @@ function LoginForm() {
     setLocalError(null);
     try {
       const { hasProfile } = await loginWithGoogle();
+      afterAuth(hasProfile);
+    } catch (err) {
+      // "account-link-required" isn't a real failure — the form below
+      // switches to the linking flow once googleLinkEmail is set.
+      if (err instanceof Error && err.message === "account-link-required") return;
+      // Other errors are shown via auth context
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLinkGoogle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const { hasProfile } = await linkGoogleAccount(linkPassword);
       afterAuth(hasProfile);
     } catch {
       // Error shown via auth context
@@ -224,8 +244,9 @@ function LoginForm() {
                 <div className="h-px bg-stone-200 flex-1" />
               </div>
 
-              {/* Email / Phone tabs */}
-              <div className="flex gap-1 mb-4 bg-stone-100 p-1 rounded-xl">
+              {/* Email / Phone tabs — hidden while linking a Google credential to an
+                  existing password account, since neither tab applies to that flow */}
+              <div className={`flex gap-1 mb-4 bg-stone-100 p-1 rounded-xl ${googleLinkEmail ? "hidden" : ""}`}>
                 <button type="button" onClick={() => setMode("email")}
                   className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium py-2 rounded-lg transition-all
                     ${mode === "email" ? "bg-white shadow-sm text-stone-900" : "text-stone-500"}`}>
@@ -244,7 +265,46 @@ function LoginForm() {
                   and throws "reCAPTCHA has already been rendered in this element". */}
               <div id="recaptcha-container" />
 
-              {mode === "email" ? (
+              {googleLinkEmail ? (
+                <form onSubmit={handleLinkGoogle} className="space-y-5">
+                  <div className="bg-sky-50 border border-sky-200 text-sky-800 text-sm px-4 py-3.5 rounded-xl leading-relaxed">
+                    You already have an account for <strong>{googleLinkEmail}</strong> signed in with
+                    a password. Enter it once below to connect Google — after that, either option
+                    signs you in.
+                  </div>
+                  <div>
+                    <label className="label">Password</label>
+                    <input
+                      type="password"
+                      className="input"
+                      placeholder="••••••••"
+                      value={linkPassword}
+                      onChange={(e) => setLinkPassword(e.target.value)}
+                      required
+                      autoFocus
+                      autoComplete="current-password"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3.5 rounded-xl font-medium">
+                      {formatAuthError(error)}
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={submitting || loading}
+                    className="btn-brand w-full flex items-center justify-center gap-2 py-3">
+                    {submitting
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Linking...</>
+                      : "Link Google Account"}
+                  </button>
+                  <button type="button"
+                    onClick={() => { cancelGoogleLink(); setLinkPassword(""); }}
+                    className="w-full text-center text-stone-400 text-xs">
+                    Cancel
+                  </button>
+                </form>
+              ) : mode === "email" ? (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label className="label">{t.auth.email}</label>

@@ -15,6 +15,9 @@ import {
   GoogleAuthProvider,
   RecaptchaVerifier,
   ConfirmationResult,
+  AuthCredential,
+  AuthError,
+  linkWithCredential,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -33,6 +36,13 @@ interface AuthContextType {
   confirmPhoneOtp: (confirmation: ConfirmationResult, code: string) => Promise<{ hasProfile: boolean }>;
   logout: () => Promise<void>;
   error: string | null;
+  // Set when Google sign-in collides with an existing password account for
+  // the same email — Firebase treats each provider as a distinct identity
+  // by default, so without this the user is simply locked out of the
+  // account they already have. See loginWithGoogle/linkGoogleAccount.
+  googleLinkEmail: string | null;
+  linkGoogleAccount: (password: string) => Promise<{ hasProfile: boolean }>;
+  cancelGoogleLink: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const pendingGoogleCredRef = useRef<AuthCredential | null>(null);
+  const [googleLinkEmail, setGoogleLinkEmail] = useState<string | null>(null);
 
   useEffect(() => {
     let unsubscribeDoc: (() => void) | null = null;
@@ -106,10 +118,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hasProfile = await checkHasProfile(result.user.uid);
       return { hasProfile };
     } catch (err: unknown) {
+      const fbErr = err as AuthError;
+      // This project's Firebase Auth uses "one account per email" (the
+      // default), so an email that already signed up with a password hits
+      // this error the moment it tries Google — Firebase treats the two
+      // providers as separate identities until explicitly linked. Rather
+      // than surface that as a dead-end failure, capture the pending
+      // Google credential and hand control to linkGoogleAccount() below.
+      if (fbErr.code === "auth/account-exists-with-different-credential") {
+        const pendingCred = GoogleAuthProvider.credentialFromError(fbErr);
+        const email = fbErr.customData?.email as string | undefined;
+        if (pendingCred && email) {
+          pendingGoogleCredRef.current = pendingCred;
+          setGoogleLinkEmail(email);
+          throw Object.assign(new Error("account-link-required"), { code: "account-link-required" });
+        }
+      }
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
       setError(msg);
       throw err;
     }
+  };
+
+  // Completes the link started above: verifies the user actually owns the
+  // existing password account, then attaches the pending Google credential
+  // to it so both sign-in methods work going forward.
+  const linkGoogleAccount = async (password: string) => {
+    if (!googleLinkEmail || !pendingGoogleCredRef.current) {
+      throw new Error("No pending Google sign-in to link");
+    }
+    setError(null);
+    try {
+      const result = await signInWithEmailAndPassword(auth, googleLinkEmail, password);
+      await linkWithCredential(result.user, pendingGoogleCredRef.current);
+      pendingGoogleCredRef.current = null;
+      setGoogleLinkEmail(null);
+      const hasProfile = await checkHasProfile(result.user.uid);
+      return { hasProfile };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to link account";
+      setError(msg);
+      throw err;
+    }
+  };
+
+  const cancelGoogleLink = () => {
+    pendingGoogleCredRef.current = null;
+    setGoogleLinkEmail(null);
+    setError(null);
   };
 
   const sendPhoneOtp = async (phoneNumber: string, recaptchaContainerId: string) => {
@@ -154,6 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, firebaseUser, loading, login, loginWithGoogle,
       sendPhoneOtp, confirmPhoneOtp, logout, error,
+      googleLinkEmail, linkGoogleAccount, cancelGoogleLink,
     }}>
       {children}
     </AuthContext.Provider>
