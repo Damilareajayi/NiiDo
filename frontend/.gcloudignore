@@ -5,4 +5,8 @@ node_modules/
 .gitignore
 .env.local
 .env.development
-.env.production
+
+# .env.production is intentionally NOT excluded — it holds only public
+# NEXT_PUBLIC_* build-time values and must reach the Docker build context,
+# otherwise Next.js bakes in an undefined NEXT_PUBLIC_API_URL and the whole
+# frontend loses backend connectivity (this broke production once already).
