@@ -42,7 +42,7 @@ function formatAuthError(error: string): string {
 export default function LoginForm() {
   const {
     login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user, logout,
-    googleLinkEmail, linkGoogleAccount, cancelGoogleLink,
+    googleLinkEmail, linkGoogleAccount, cancelGoogleLink, justCompletedRedirectSignIn,
   } = useAuth();
   const { t } = useLang();
   const router = useRouter();
@@ -69,6 +69,14 @@ export default function LoginForm() {
   // first, so users always have a way to switch accounts instead of being
   // silently bounced back into whichever account happened to be active.
   const [justSignedIn, setJustSignedIn] = useState(false);
+
+  // Google sign-in is a full-page redirect (see useAuth), so this page
+  // remounts fresh on the way back from it — justSignedIn can't have
+  // survived that as local state. justCompletedRedirectSignIn is the
+  // AuthProvider-level signal that survives it instead.
+  useEffect(() => {
+    if (justCompletedRedirectSignIn) setJustSignedIn(true);
+  }, [justCompletedRedirectSignIn]);
 
   useEffect(() => {
     if (loading || !firebaseUser) return;
@@ -98,14 +106,13 @@ export default function LoginForm() {
     setSubmitting(true);
     setLocalError(null);
     try {
+      // Navigates the whole tab to Google — this only throws if the
+      // redirect itself couldn't start. Success, failure, and the
+      // account-link collision are all handled after returning, by the
+      // getRedirectResult effect in useAuth.
       await loginWithGoogle();
-      setJustSignedIn(true);
-    } catch (err) {
-      // "account-link-required" isn't a real failure — the form below
-      // switches to the linking flow once googleLinkEmail is set.
-      if (err instanceof Error && err.message === "account-link-required") return;
-      // Other errors are shown via auth context
-    } finally {
+    } catch {
+      // Error shown via auth context
       setSubmitting(false);
     }
   };

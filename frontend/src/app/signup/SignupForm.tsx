@@ -22,7 +22,7 @@ const ROLES: { value: Role; label: string; icon: typeof User; badgeClass: string
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithGoogle, loading, user, firebaseUser, logout } = useAuth();
+  const { login, loginWithGoogle, loading, user, firebaseUser, logout, googleLinkEmail, justCompletedRedirectSignIn } = useAuth();
   const { lang } = useLang();
 
   const next = searchParams.get("next") || "/";
@@ -30,6 +30,20 @@ export default function SignupForm() {
   // right here" (continue straight in) from "already had a session when
   // this page loaded" (ask first, so switching accounts is always possible).
   const [justSignedIn, setJustSignedIn] = useState(false);
+
+  // Google sign-in is a full-page redirect (see useAuth) — this page
+  // remounts fresh on the way back from it, so justSignedIn has to be
+  // re-seeded from the AuthProvider-level signal that survives the reload.
+  useEffect(() => {
+    if (justCompletedRedirectSignIn) setJustSignedIn(true);
+  }, [justCompletedRedirectSignIn]);
+
+  // The redirect can also come back having hit the "already have a
+  // password account with this email" collision — that flow lives on
+  // /login, not here, so hand off to it as soon as it's detected.
+  useEffect(() => {
+    if (googleLinkEmail) router.push(`/login?next=${encodeURIComponent(next)}`);
+  }, [googleLinkEmail, router, next]);
 
   useEffect(() => {
     if (loading || !firebaseUser) return;
@@ -98,19 +112,12 @@ export default function SignupForm() {
     setSubmitting(true);
     setError(null);
     try {
+      // Navigates the whole tab to Google — success, failure, and the
+      // account-link collision are all handled after returning, by the
+      // getRedirectResult effect in useAuth (see the effects above).
       await loginWithGoogle();
-      setJustSignedIn(true);
     } catch (err) {
-      // This email already has a password account — hand off to /login,
-      // where useAuth's googleLinkEmail state (already set by loginWithGoogle)
-      // drives the password-to-link form. AuthProvider lives above this page
-      // in the layout, so that state survives the client-side navigation.
-      if (err instanceof Error && err.message === "account-link-required") {
-        router.push(`/login?next=${encodeURIComponent(next)}`);
-        return;
-      }
       setError(err instanceof Error ? err.message : "Google sign-in failed");
-    } finally {
       setSubmitting(false);
     }
   };
