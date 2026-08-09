@@ -37,3 +37,6 @@ Thumbs.db
 
 # Local AI coding tool config — not for the public repo
 .claude/
+
+# Contains live production secrets (Stripe, Twilio, Firebase Admin key) — never commit
+backend/env_vars.yaml
