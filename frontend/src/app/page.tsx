@@ -414,13 +414,34 @@ export default function RootPage() {
 
       {/* Footer */}
       <footer className="border-t border-stone-200">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-stone-900 flex items-center justify-center">
               <img src="/niido-icon-mark.svg" alt="" className="w-3.5 h-3.5" />
             </div>
             <span className="font-display font-semibold text-stone-700 text-sm">NiiDo</span>
           </div>
+
+          <div className="flex items-center gap-5 text-xs">
+            <span className="text-stone-400 font-semibold uppercase tracking-wide">LearnScape</span>
+            <a
+              href="https://learnscape.africa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              Main Website
+            </a>
+            <a
+              href="https://learnscape.africa/edvolution"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-stone-500 hover:text-stone-700 transition-colors"
+            >
+              Edvolution Summit
+            </a>
+          </div>
+
           <p className="text-stone-400 text-xs">
             {t.landing.footerTagline} · by LearnScape Africa
           </p>
