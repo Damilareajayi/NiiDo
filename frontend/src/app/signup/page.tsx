@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/hooks/useLang";
 import { GRADES, SUBJECTS } from "@/lib/constants";
 import { Grade, Subject } from "@/types";
+import { hasCompleteProfile, identityLabel } from "@/lib/authRouting";
 import { User, GraduationCap, School, Eye, EyeOff, Loader2 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -21,19 +22,26 @@ const ROLES: { value: Role; label: string; icon: typeof User; badgeClass: string
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithGoogle, loading, user, firebaseUser } = useAuth();
+  const { login, loginWithGoogle, loading, user, firebaseUser, logout } = useAuth();
   const { lang } = useLang();
 
   const next = searchParams.get("next") || "/";
+  // See login/page.tsx for why this exists: distinguishes "just signed up
+  // right here" (continue straight in) from "already had a session when
+  // this page loaded" (ask first, so switching accounts is always possible).
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
-    if (firebaseUser && !user) {
+    if (loading || !firebaseUser) return;
+    if (!hasCompleteProfile(user)) {
       router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
-    } else if (firebaseUser && user) {
+    } else if (justSignedIn) {
       router.replace(next);
     }
-  }, [firebaseUser, user, loading, router, next]);
+  }, [firebaseUser, user, loading, justSignedIn, router, next]);
+
+  const showContinueAs = !loading && firebaseUser && hasCompleteProfile(user) && !justSignedIn;
+
   const initialRole = (searchParams.get("role") as Role) || "student";
   const [role, setRole] = useState<Role>(
     ["student", "teacher", "admin"].includes(initialRole) ? initialRole : "student"
@@ -78,7 +86,7 @@ function SignupForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
       await login(email, password);
-      router.push(next);
+      setJustSignedIn(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -90,8 +98,8 @@ function SignupForm() {
     setSubmitting(true);
     setError(null);
     try {
-      const { hasProfile } = await loginWithGoogle();
-      router.push(hasProfile ? next : `/complete-profile?next=${encodeURIComponent(next)}`);
+      await loginWithGoogle();
+      setJustSignedIn(true);
     } catch (err) {
       // This email already has a password account — hand off to /login,
       // where useAuth's googleLinkEmail state (already set by loginWithGoogle)
@@ -131,6 +139,31 @@ function SignupForm() {
             <p className="text-stone-500 mt-1 text-sm">Free to join — pick who you are to get started</p>
           </div>
 
+          {showContinueAs ? (
+            <div className="card p-8">
+              <h2 className="text-xl font-display font-semibold text-stone-900 mb-1">
+                Welcome back
+              </h2>
+              <p className="text-stone-500 text-sm mb-6">
+                You&apos;re already signed in as <strong>{identityLabel(firebaseUser)}</strong>.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.replace(next)}
+                className="btn-brand w-full flex items-center justify-center gap-2 py-3 mb-3"
+              >
+                Continue
+              </button>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="w-full text-center text-stone-400 text-xs hover:text-stone-600"
+              >
+                Not you? Sign out and create a new account
+              </button>
+            </div>
+          ) : (
+          <>
           {/* Role selector */}
           <div className="grid grid-cols-3 gap-2 mb-6">
             {ROLES.map((r) => (
@@ -317,6 +350,8 @@ function SignupForm() {
               <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-brand-600 font-medium">Sign in</Link>
             </p>
           </div>
+          </>
+          )}
         </motion.div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import { useLang } from "@/hooks/useLang";
 import { apiFetch } from "@/lib/api";
 import { GRADES, SUBJECTS } from "@/lib/constants";
 import { Grade, Subject } from "@/types";
+import { hasCompleteProfile, identityLabel } from "@/lib/authRouting";
 import { User, GraduationCap, School, Loader2 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -22,8 +23,22 @@ function CompleteProfileForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, user, loading, logout } = useAuth();
   const { lang } = useLang();
+
+  // This page only makes sense mid-signup: authenticated, but no NiiDo
+  // profile yet. If either half of that stops being true — no session at
+  // all, or a profile now exists (e.g. this tab was left open after
+  // finishing setup elsewhere, or a duplicate submit already succeeded) —
+  // leave immediately instead of showing a form that can only 409.
+  useEffect(() => {
+    if (loading) return;
+    if (!firebaseUser) {
+      router.replace(`/login?next=${encodeURIComponent(next)}`);
+    } else if (hasCompleteProfile(user)) {
+      router.replace(next);
+    }
+  }, [loading, firebaseUser, user, router, next]);
 
   const [role, setRole] = useState<Role>("student");
   const [name, setName] = useState(firebaseUser?.displayName || "");
@@ -60,7 +75,16 @@ function CompleteProfileForm() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to complete profile");
+      if (!res.ok) {
+        // The guard above should make this unreachable in normal use, but a
+        // duplicate submit (double-click, two tabs) can still race past it —
+        // if the profile now exists, that's success, not an error to show.
+        if (res.status === 409) {
+          router.push(next);
+          return;
+        }
+        throw new Error(data.error || "Failed to complete profile");
+      }
       router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -84,8 +108,15 @@ function CompleteProfileForm() {
             <img src="/mascot/mascot-waving.png" alt="" className="w-20 h-auto mx-auto mb-3" />
             <h1 className="text-2xl font-display font-bold text-stone-900">One more step</h1>
             <p className="text-stone-500 mt-1 text-sm">
-              You&apos;re signed in as {firebaseUser?.email || firebaseUser?.phoneNumber} — tell us who you are
+              You&apos;re signed in as {identityLabel(firebaseUser)} — tell us who you are
             </p>
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="text-xs text-stone-400 hover:text-stone-600 mt-1"
+            >
+              Not you? Sign out
+            </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-6">

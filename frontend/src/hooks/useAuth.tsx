@@ -22,7 +22,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { NiiDoUser } from "@/types";
 
@@ -31,9 +31,9 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<{ hasProfile: boolean }>;
+  loginWithGoogle: () => Promise<void>;
   sendPhoneOtp: (phoneNumber: string, recaptchaContainerId: string) => Promise<ConfirmationResult>;
-  confirmPhoneOtp: (confirmation: ConfirmationResult, code: string) => Promise<{ hasProfile: boolean }>;
+  confirmPhoneOtp: (confirmation: ConfirmationResult, code: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
   // Set when Google sign-in collides with an existing password account for
@@ -41,16 +41,11 @@ interface AuthContextType {
   // by default, so without this the user is simply locked out of the
   // account they already have. See loginWithGoogle/linkGoogleAccount.
   googleLinkEmail: string | null;
-  linkGoogleAccount: (password: string) => Promise<{ hasProfile: boolean }>;
+  linkGoogleAccount: (password: string) => Promise<void>;
   cancelGoogleLink: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-async function checkHasProfile(uid: string): Promise<boolean> {
-  const snap = await getDoc(doc(db, "users", uid));
-  return snap.exists();
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<NiiDoUser | null>(null);
@@ -114,9 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider.setCustomParameters({
         prompt: "select_account",
       });
-      const result = await signInWithPopup(auth, provider);
-      const hasProfile = await checkHasProfile(result.user.uid);
-      return { hasProfile };
+      await signInWithPopup(auth, provider);
     } catch (err: unknown) {
       const fbErr = err as AuthError;
       // This project's Firebase Auth uses "one account per email" (the
@@ -153,8 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await linkWithCredential(result.user, pendingGoogleCredRef.current);
       pendingGoogleCredRef.current = null;
       setGoogleLinkEmail(null);
-      const hasProfile = await checkHasProfile(result.user.uid);
-      return { hasProfile };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to link account";
       setError(msg);
@@ -191,9 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmPhoneOtp = async (confirmation: ConfirmationResult, code: string) => {
     setError(null);
     try {
-      const result = await confirmation.confirm(code);
-      const hasProfile = await checkHasProfile(result.user.uid);
-      return { hasProfile };
+      await confirmation.confirm(code);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid verification code";
       setError(msg);

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/hooks/useLang";
 import { COUNTRIES } from "@/lib/constants";
 import { CountrySelect } from "@/components/ui/CountrySelect";
+import { hasCompleteProfile, identityLabel } from "@/lib/authRouting";
 import { Eye, EyeOff, Loader2, Phone, Mail } from "lucide-react";
 
 function formatAuthError(error: string): string {
@@ -40,24 +41,13 @@ function formatAuthError(error: string): string {
 
 function LoginForm() {
   const {
-    login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user,
+    login, loginWithGoogle, sendPhoneOtp, confirmPhoneOtp, loading, error, firebaseUser, user, logout,
     googleLinkEmail, linkGoogleAccount, cancelGoogleLink,
   } = useAuth();
   const { t } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
-
-  useEffect(() => {
-    if (loading) return;
-    if (firebaseUser) {
-      if (!user || !user.role || !["student", "teacher", "admin"].includes(user.role)) {
-        router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
-      } else {
-        router.replace(next);
-      }
-    }
-  }, [firebaseUser, user, loading, router, next]);
 
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
@@ -71,17 +61,32 @@ function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [linkPassword, setLinkPassword] = useState("");
+  // True only when THIS page instance just performed a sign-in action —
+  // as opposed to the effect below seeing an already-authenticated session
+  // that was simply sitting there when the page loaded (e.g. someone
+  // navigated to /login while already signed in). A fresh sign-in should
+  // continue straight into the app; an already-open session should ask
+  // first, so users always have a way to switch accounts instead of being
+  // silently bounced back into whichever account happened to be active.
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
-  const afterAuth = (hasProfile: boolean) => {
-    router.push(hasProfile ? next : `/complete-profile?next=${encodeURIComponent(next)}`);
-  };
+  useEffect(() => {
+    if (loading || !firebaseUser) return;
+    if (!hasCompleteProfile(user)) {
+      router.replace(`/complete-profile?next=${encodeURIComponent(next)}`);
+    } else if (justSignedIn) {
+      router.replace(next);
+    }
+  }, [firebaseUser, user, loading, justSignedIn, router, next]);
+
+  const showContinueAs = !loading && firebaseUser && hasCompleteProfile(user) && !justSignedIn;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push(next);
+      setJustSignedIn(true);
     } catch {
       // Error shown via auth context
     } finally {
@@ -93,8 +98,8 @@ function LoginForm() {
     setSubmitting(true);
     setLocalError(null);
     try {
-      const { hasProfile } = await loginWithGoogle();
-      afterAuth(hasProfile);
+      await loginWithGoogle();
+      setJustSignedIn(true);
     } catch (err) {
       // "account-link-required" isn't a real failure — the form below
       // switches to the linking flow once googleLinkEmail is set.
@@ -109,8 +114,8 @@ function LoginForm() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const { hasProfile } = await linkGoogleAccount(linkPassword);
-      afterAuth(hasProfile);
+      await linkGoogleAccount(linkPassword);
+      setJustSignedIn(true);
     } catch {
       // Error shown via auth context
     } finally {
@@ -142,8 +147,8 @@ function LoginForm() {
     setSubmitting(true);
     setLocalError(null);
     try {
-      const { hasProfile } = await confirmPhoneOtp(confirmation, otpCode);
-      afterAuth(hasProfile);
+      await confirmPhoneOtp(confirmation, otpCode);
+      setJustSignedIn(true);
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Invalid code");
     } finally {
@@ -215,6 +220,31 @@ function LoginForm() {
             </div>
 
             <div className="card p-8">
+              {showContinueAs ? (
+                <>
+                  <h2 className="text-xl font-display font-semibold text-stone-900 mb-1">
+                    Welcome back
+                  </h2>
+                  <p className="text-stone-500 text-sm mb-6">
+                    You&apos;re already signed in as <strong>{identityLabel(firebaseUser)}</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => router.replace(next)}
+                    className="btn-brand w-full flex items-center justify-center gap-2 py-3 mb-3"
+                  >
+                    Continue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="w-full text-center text-stone-400 text-xs hover:text-stone-600"
+                  >
+                    Not you? Sign out and use a different account
+                  </button>
+                </>
+              ) : (
+              <>
               <h2 className="text-xl font-display font-semibold text-stone-900 mb-1">
                 {t.auth.loginTitle}
               </h2>
@@ -435,6 +465,8 @@ function LoginForm() {
                   Create one for free
                 </Link>
               </p>
+              </>
+              )}
             </div>
 
             {/* Module pills — mobile only, hero panel already shows these on desktop */}
