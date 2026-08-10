@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Client-side Firestore access is minimal by design — almost everything goes
+// through the backend (Admin SDK, which bypasses these rules entirely) via
+// authenticated API routes that also enforce role/schoolId scoping. These
+// rules exist only for the handful of direct client reads the frontend does:
+//   - useAuth.tsx:        users/{uid}    (the signed-in user's own profile)
+//   - useReadProfile.tsx: students/{uid} (the signed-in student's own LearnerDNA)
+//   - profile/page.tsx:   schools/{id}   (the signed-in user's own school)
+// The previous ruleset here was "allow read, write: if false" — a blanket
+// deny that silently broke every one of these, which is why the app could
+// never recognize a signed-in user's profile client-side even though
+// Firebase Auth itself, and the backend's Admin-SDK-based routes, worked
+// fine the whole time.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      // Role changes are otherwise done via backend routes (Admin SDK); the
+      // one exception is profile/page.tsx's Role Switcher, which is a
+      // client-side write restricted in the UI to the platform owner — this
+      // mirrors that restriction here so it can't be bypassed by calling
+      // updateDoc directly.
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.auth.token.email == 'ajayidamilarefelix@gmail.com';
+    }
+
+    match /students/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /schools/{schoolId} {
+      allow read: if request.auth != null
+                  && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.schoolId == schoolId;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
