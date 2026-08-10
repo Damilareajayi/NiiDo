@@ -16,6 +16,14 @@
         { "fieldPath": "role", "order": "ASCENDING" },
         { "fieldPath": "lastActive", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "learningContent",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "studentId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -9,7 +9,8 @@ import { apiFetch } from "@/lib/api";
 import { progressColorAt } from "@/lib/colorGradient";
 import { FadeIn } from "@/components/ui/FadeIn";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BookOpen, Sparkles, Loader2, ArrowRight, ArrowLeft, CheckCircle2, Lock } from "lucide-react";
+import { PricingCards } from "@/components/PricingCards";
+import { BookOpen, Sparkles, Loader2, ArrowRight, ArrowLeft, CheckCircle2, History, ChevronRight } from "lucide-react";
 
 interface LearningSection {
   heading: string;
@@ -24,7 +25,26 @@ interface LearningContent {
   imageUrl?: string | null;
 }
 
-type Stage = "form" | "loading" | "reading" | "done" | "premium-required" | "error";
+interface HistoryItem extends LearningContent {
+  id: string;
+  createdAt?: { _seconds?: number } | string | null;
+}
+
+interface Usage {
+  isPremium: boolean;
+  usedToday: number;
+  limit: number;
+  remaining: number | null;
+}
+
+type Stage = "form" | "loading" | "reading" | "done" | "limit-reached" | "error";
+
+function historyDate(createdAt: HistoryItem["createdAt"]): string {
+  if (!createdAt) return "";
+  const ms = typeof createdAt === "object" && createdAt._seconds ? createdAt._seconds * 1000 : Date.parse(createdAt as string);
+  if (!ms || Number.isNaN(ms)) return "";
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 export default function MyLearningPage() {
   const { profile, loading: profileLoading } = useReadProfile();
@@ -34,6 +54,14 @@ export default function MyLearningPage() {
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState<LearningContent | null>(null);
   const [step, setStep] = useState(0);
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  useEffect(() => {
+    if (!profile) return;
+    apiFetch("/api/learn/usage").then((res) => res.json()).then(setUsage).catch(() => {});
+    apiFetch("/api/learn/history").then((res) => res.json()).then((data) => setHistory(data.items || [])).catch(() => {});
+  }, [profile]);
 
   const generate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,18 +74,26 @@ export default function MyLearningPage() {
         body: JSON.stringify({ subject, topic }),
       });
       const data = await res.json();
-      if (res.status === 403 && data.code === "PREMIUM_REQUIRED") {
-        setStage("premium-required");
+      if (res.status === 403 && (data.code === "DAILY_LIMIT_REACHED" || data.code === "PREMIUM_REQUIRED")) {
+        setError(data.error || null);
+        setStage("limit-reached");
         return;
       }
       if (!res.ok) throw new Error(data.error || "Failed to generate content");
       setContent(data.content);
       setStep(0);
       setStage("reading");
+      apiFetch("/api/learn/usage").then((r) => r.json()).then(setUsage).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStage("error");
     }
+  };
+
+  const openHistoryItem = (item: HistoryItem) => {
+    setContent(item);
+    setStep(0);
+    setStage("reading");
   };
 
   const reset = () => {
@@ -88,52 +124,87 @@ export default function MyLearningPage() {
             colorClass="bg-coral-100 text-coral-600"
           />
         </FadeIn>
-      ) : stage === "premium-required" ? (
+      ) : stage === "limit-reached" ? (
         <FadeIn delay={0.08}>
-          <EmptyState
-            icon={Lock}
-            mascotSrc="/mascot/mascot-waving.png"
-            title="My Learning is a Premium feature"
-            description="Upgrade to NiiDo Premium to generate self-paced lessons on any subject, tailored to how you learn."
-            actionLabel="See Premium Plans"
-            actionHref="/#pricing"
-            colorClass="bg-brand-100 text-brand-600"
-          />
+          <div className="text-center mb-8">
+            <h2 className="text-xl font-display font-semibold text-stone-900">
+              {error || "You've used today's free lessons"}
+            </h2>
+            <p className="text-stone-500 text-sm mt-1">
+              Come back tomorrow for {usage?.limit ?? 2} more free lessons, or go unlimited with Premium.
+            </p>
+          </div>
+          <PricingCards />
+          <button className="btn-ghost w-full mt-6 text-center" onClick={() => setStage("form")}>
+            Back
+          </button>
         </FadeIn>
       ) : stage === "form" ? (
-        <FadeIn delay={0.08} className="card p-6 md:p-8">
-          <form className="space-y-5" onSubmit={generate}>
-            <div>
-              <label className="label">Subject or discipline</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="e.g. Organic Chemistry, Constitutional Law, Fractions, Machine Learning"
-                required
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
+        <FadeIn delay={0.08}>
+          {usage && !usage.isPremium && (
+            <div className="flex items-center justify-between bg-brand-50 border border-brand-200 text-brand-700 text-xs font-medium px-4 py-2.5 rounded-xl mb-4">
+              <span>{usage.remaining ?? 0} of {usage.limit} free lessons left today</span>
+              <a href="/#pricing" className="underline shrink-0">Go unlimited</a>
             </div>
-            <div>
-              <label className="label">What do you want to learn about?</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="e.g. Covalent bonds, The First Amendment, Simple Sentences"
-                required
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-              />
-            </div>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
-                {error}
+          )}
+          <div className="card p-6 md:p-8">
+            <form className="space-y-5" onSubmit={generate}>
+              <div>
+                <label className="label">Subject or discipline</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Organic Chemistry, Constitutional Law, Fractions, Machine Learning"
+                  required
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
               </div>
-            )}
-            <button type="submit" className="btn-brand w-full flex items-center justify-center gap-2 py-3">
-              <Sparkles className="w-4 h-4" /> Generate My Lesson
-            </button>
-          </form>
+              <div>
+                <label className="label">What do you want to learn about?</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Covalent bonds, The First Amendment, Simple Sentences"
+                  required
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                />
+              </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+                  {error}
+                </div>
+              )}
+              <button type="submit" className="btn-brand w-full flex items-center justify-center gap-2 py-3">
+                <Sparkles className="w-4 h-4" /> Generate My Lesson
+              </button>
+            </form>
+          </div>
+
+          {history.length > 0 && (
+            <div className="mt-6">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-400 uppercase tracking-wide mb-3">
+                <History className="w-3.5 h-3.5" /> Past Lessons
+              </p>
+              <div className="card divide-y divide-stone-100">
+                {history.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => openHistoryItem(item)}
+                    className="w-full flex items-center gap-3 p-4 text-left hover:bg-stone-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-stone-900 truncate">{item.topic}</p>
+                      <p className="text-stone-400 text-xs truncate">{item.subject} · {historyDate(item.createdAt)}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </FadeIn>
       ) : stage === "loading" ? (
         <div className="card p-6 md:p-8 flex flex-col items-center justify-center py-20 text-center">

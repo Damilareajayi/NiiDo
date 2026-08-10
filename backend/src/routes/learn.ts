@@ -5,11 +5,30 @@ import { TutorAgent } from "../services/agents/TutorAgent";
 import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeLanguage, styleForLearningTrack } from "../services/eduprompt";
 import { generateLessonIllustration } from "../services/openaiImages";
 import { db, Timestamp } from "../firebase";
-import { requireAuth, requireRole, requirePremium } from "../middleware/auth";
+import { requireAuth, requireRole } from "../middleware/auth";
 
 export const learnRouter = Router();
 
-learnRouter.use(requireAuth, requireRole("student"), requirePremium);
+learnRouter.use(requireAuth, requireRole("student"));
+
+// Free accounts get a taste of My Learning instead of a hard paywall —
+// a small number of generations per day, reset at UTC midnight. Premium
+// is unlimited. Deliberately not requirePremium at the router level
+// anymore; the check now happens inside /generate so it can tell the
+// difference between "never had access" and "used today's free lessons",
+// which the frontend needs to show the right message.
+const FREE_DAILY_LIMIT = 2;
+
+async function countTodaysGenerations(studentId: string): Promise<number> {
+  const startOfDayUTC = new Date();
+  startOfDayUTC.setUTCHours(0, 0, 0, 0);
+  const snap = await db.collection("learningContent")
+    .where("studentId", "==", studentId)
+    .where("createdAt", ">=", Timestamp.fromDate(startOfDayUTC))
+    .count()
+    .get();
+  return snap.data().count;
+}
 
 // Subject is free text now — NiiDo serves learners of any discipline, not just
 // the fixed K-12 subject list (e.g. "Organic Chemistry", "Constitutional Law").
@@ -51,6 +70,19 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
   try {
     const data = GenerateSchema.parse(req.body);
     const studentId = req.authUser!.uid;
+    const isPremium = req.authUser!.subscriptionTier === "premium";
+
+    if (!isPremium) {
+      const usedToday = await countTodaysGenerations(studentId);
+      if (usedToday >= FREE_DAILY_LIMIT) {
+        return res.status(403).json({
+          error: `You've used today's ${FREE_DAILY_LIMIT} free lessons — upgrade to NiiDo Premium for unlimited access, or come back tomorrow.`,
+          code: "DAILY_LIMIT_REACHED",
+          limit: FREE_DAILY_LIMIT,
+          used: usedToday,
+        });
+      }
+    }
 
     const studentDoc = await db.collection("students").doc(studentId).get();
     const profile = studentDoc.data()?.readProfile;
@@ -144,6 +176,20 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
     }
     console.error(err);
     res.status(500).json({ error: "Failed to generate learning content" });
+  }
+});
+
+// GET /api/learn/usage — lets the frontend show "X of Y free lessons left
+// today" up front, rather than the student only finding out by hitting
+// the limit on submit.
+learnRouter.get("/usage", async (req: Request, res: Response) => {
+  try {
+    const isPremium = req.authUser!.subscriptionTier === "premium";
+    const usedToday = isPremium ? 0 : await countTodaysGenerations(req.authUser!.uid);
+    res.json({ isPremium, usedToday, limit: FREE_DAILY_LIMIT, remaining: isPremium ? null : Math.max(0, FREE_DAILY_LIMIT - usedToday) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to check usage" });
   }
 });
 

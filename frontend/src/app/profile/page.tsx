@@ -14,8 +14,30 @@ import { StatCardSkeleton } from "@/components/ui/Skeleton";
 import { School as SchoolType } from "@/types";
 import {
   Mail, GraduationCap, Users, Brain, MapPin, BookOpenCheck,
-  FileText, AlertCircle,
+  FileText, AlertCircle, Crown,
 } from "lucide-react";
+
+function PlanCard({ tier }: { tier?: "free" | "premium" }) {
+  const isPremium = tier === "premium";
+  return (
+    <FadeIn delay={0.2}>
+      <div className={`card p-6 flex items-center gap-4 ${isPremium ? "border-2 border-brand-200 bg-gradient-to-br from-brand-50 to-white" : ""}`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${isPremium ? "bg-brand-500 text-white" : "bg-stone-100 text-stone-500"}`}>
+          <Crown className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-stone-400 uppercase tracking-wide font-semibold">Your Plan</p>
+          <p className="font-display font-semibold text-stone-900">
+            {isPremium ? "NiiDo Premium" : "NiiDo Free"}
+          </p>
+        </div>
+        {!isPremium && (
+          <a href="/#pricing" className="btn-brand text-sm shrink-0">Upgrade</a>
+        )}
+      </div>
+    </FadeIn>
+  );
+}
 
 const TRACK_LABELS: Record<string, string> = {
   visual: "Visual", auditory: "Auditory", kinesthetic: "Hands-On",
@@ -100,6 +122,10 @@ function StudentProfile() {
           )}
         </div>
       </FadeIn>
+
+      <div className="mt-4">
+        <PlanCard tier={user?.subscriptionTier} />
+      </div>
     </div>
   );
 }
@@ -148,6 +174,10 @@ function TeacherProfile() {
             <StatCard index={1} label="Lessons This Week" value={stats?.lessonsGeneratedThisWeek ?? 0} icon={FileText} color="bg-teal-100 text-teal-600" />
           </>
         )}
+      </div>
+
+      <div className="mt-4">
+        <PlanCard tier={user?.subscriptionTier} />
       </div>
     </div>
   );
@@ -207,6 +237,26 @@ function SchoolProfile() {
           </>
         )}
       </div>
+
+      {!loading && (
+        <FadeIn delay={0.2} className="mt-4">
+          <div className="card p-6 flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-stone-100 text-stone-500 flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-stone-400 uppercase tracking-wide font-semibold">School Plan</p>
+              <p className="font-display font-semibold text-stone-900 capitalize">
+                {school?.subscriptionTier === "institutional" ? "Institutional" :
+                 school?.subscriptionTier === "sponsored" ? "Sponsored" : "Free"}
+              </p>
+            </div>
+            {school?.subscriptionTier !== "institutional" && (
+              <a href="mailto:sales@learnscape.africa" className="btn-outline text-sm shrink-0">Contact Sales</a>
+            )}
+          </div>
+        </FadeIn>
+      )}
     </div>
   );
 }

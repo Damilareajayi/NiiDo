@@ -38,12 +38,18 @@ export default function UploadStudents() {
     setStage("processing");
     setError(null);
 
-    const isCsv = file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv");
+    const name = file.name.toLowerCase();
+    const isCsv = file.type === "text/csv" || name.endsWith(".csv");
+    const isExcel =
+      name.endsWith(".xlsx") || name.endsWith(".xls") ||
+      file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel";
+    const endpoint = isCsv ? "/api/upload/csv" : isExcel ? "/api/upload/excel" : "/api/upload/register-photo";
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await apiFetch(isCsv ? "/api/upload/csv" : "/api/upload/register-photo", {
+      const res = await apiFetch(endpoint, {
         method: "POST",
         body: formData,
       });
@@ -73,6 +79,8 @@ export default function UploadStudents() {
     accept: {
       "image/jpeg": [], "image/png": [], "image/webp": [],
       "application/pdf": [], "text/csv": [".csv"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.ms-excel": [".xls"],
     },
   });
 
@@ -135,7 +143,7 @@ export default function UploadStudents() {
           <FileText className="w-8 h-8 text-stone-400" />
         </div>
         <p className="font-medium text-stone-700">Drag & drop your file here, or click to browse</p>
-        <p className="text-stone-400 text-sm mt-1">Supports: JPG, PNG, PDF (register photo), or CSV</p>
+        <p className="text-stone-400 text-sm mt-1">Supports: Excel (.xlsx/.xls), CSV, or a photo/PDF of your register</p>
       </div>
     );
   } else if (stage === "processing") {
