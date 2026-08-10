@@ -28,13 +28,19 @@ async function requestImage(prompt: string): Promise<Buffer> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
+    // gpt-image-1, not dall-e-3: confirmed empirically — this key's account
+    // rejects response_format as an unknown parameter, which is specifically
+    // a gpt-image-1 behavior (it has no response_format option at all and
+    // always returns b64_json, unlike dall-e-2/3 which support choosing
+    // url vs b64_json). quality uses gpt-image-1's own enum (low/medium/
+    // high/auto), not dall-e's (standard/hd) — "medium" is a reasonable
+    // cost/quality default for a topic illustration.
     body: JSON.stringify({
-      model: "dall-e-3",
+      model: "gpt-image-1",
       prompt,
       n: 1,
       size: "1024x1024",
-      quality: "standard",
-      response_format: "b64_json",
+      quality: "medium",
     }),
   });
 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useLang } from "@/hooks/useLang";
 import { FadeIn } from "@/components/ui/FadeIn";
+import { InstallAppButton } from "@/components/layout/InstallAppButton";
 import { progressColorAt } from "@/lib/colorGradient";
 import { Brain, GraduationCap, BarChart3, School, User, ArrowRight, Globe2, BookOpenCheck, MessageCircle, Check, Sparkles, BookOpen } from "lucide-react";
 
@@ -62,6 +63,7 @@ export default function RootPage() {
           <span className="font-display font-bold text-stone-900 text-lg">NiiDo</span>
         </div>
         <div className="flex items-center gap-3">
+          <InstallAppButton />
           <Link href="/login" className="btn-ghost text-sm font-semibold text-stone-700">
             {t.landing.signIn}
           </Link>
