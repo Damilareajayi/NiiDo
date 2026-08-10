@@ -1,14 +1,33 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LangProvider } from "@/hooks/useLang";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "NiiDo — Every child learns differently",
   description:
     "The adaptive learning platform for every learner, everywhere. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
+  manifest: "/manifest.json",
+  // Next's file-convention favicon (src/app/icon.png) already covers the
+  // browser-tab icon — this just adds the one it doesn't auto-detect, for
+  // iOS's home-screen icon specifically.
+  icons: {
+    apple: [{ url: "/niido-icon-192.png", sizes: "192x192", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "NiiDo",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#7c3aed",
 };
 
 // Next.js's default Cache-Control for prerendered pages assumes a
@@ -36,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-body antialiased bg-stone-50 text-stone-900">
+        <ServiceWorkerRegistration />
         <AuthProvider>
           <LangProvider>
             <LanguageSwitcher />

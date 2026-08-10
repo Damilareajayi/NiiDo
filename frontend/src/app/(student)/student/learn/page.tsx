@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useReadProfile } from "@/hooks/useReadProfile";
 import { apiFetch } from "@/lib/api";
 import { progressColorAt } from "@/lib/colorGradient";
@@ -180,9 +182,9 @@ export default function MyLearningPage() {
                 <h3 className="font-display font-semibold text-stone-900 text-lg mb-3">
                   {content.sections[step].heading}
                 </h3>
-                <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-line">
-                  {content.sections[step].body}
-                </p>
+                <div className="prose prose-stone prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.sections[step].body}</ReactMarkdown>
+                </div>
 
                 <div className="flex gap-3 mt-8">
                   {step > 0 && (

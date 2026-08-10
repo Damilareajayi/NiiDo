@@ -1,0 +1,15 @@
+{
+  "name": "NiiDo — Every child learns differently",
+  "short_name": "NiiDo",
+  "description": "The adaptive learning platform for every learner, everywhere. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fafaf9",
+  "theme_color": "#7c3aed",
+  "icons": [
+    { "src": "/niido-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/niido-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

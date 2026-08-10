@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useLang } from "@/hooks/useLang";
 import { apiFetch } from "@/lib/api";
 import { GRADES, SUBJECTS } from "@/lib/constants";
@@ -209,27 +210,35 @@ export default function TeachPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">Curriculum</label>
-                <select
+                <input
+                  type="text"
                   className="input"
+                  list="curriculum-suggestions"
                   value={curriculum}
                   onChange={(e) => setCurriculum(e.target.value)}
-                >
+                  placeholder="e.g. AQA GCSE, State-specific..."
+                />
+                <datalist id="curriculum-suggestions">
                   {CURRICULA.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                    <option key={c.value} value={c.value} />
                   ))}
-                </select>
+                </datalist>
               </div>
               <div>
                 <label className="label">Output Language</label>
-                <select
+                <input
+                  type="text"
                   className="input"
+                  list="language-suggestions"
                   value={outputLanguage}
                   onChange={(e) => setOutputLanguage(e.target.value)}
-                >
+                  placeholder="Any language"
+                />
+                <datalist id="language-suggestions">
                   {LANGUAGES.map((l) => (
-                    <option key={l.value} value={l.value}>{l.label}</option>
+                    <option key={l.value} value={l.value} />
                   ))}
-                </select>
+                </datalist>
               </div>
             </div>
 
@@ -318,7 +327,7 @@ export default function TeachPage() {
           {lesson.markdown ? (
             <FadeIn delay={0.06}>
               <div className="card p-6 md:p-8 prose prose-stone prose-sm max-w-none">
-                <ReactMarkdown>{lesson.markdown}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.markdown}</ReactMarkdown>
               </div>
             </FadeIn>
           ) : (

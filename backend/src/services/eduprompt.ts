@@ -137,3 +137,24 @@ const LANGUAGE_NAMES: Record<string, string> = {
 export function humanizeLanguage(code: string): string | undefined {
   return LANGUAGE_NAMES[code];
 }
+
+// Maps a student's LearnerDNA primary track to the EduPrompt style that
+// actually serves that learning style — same mapping documented in
+// TutorAgent's Gemini fallback prompt, applied here so EduPrompt-generated
+// My Learning content is tailored the same way regardless of which
+// provider ends up serving the request. EduPrompt has no dedicated
+// "auditory" style (its output is text/markdown, not audio), so that one
+// is left unset — "standard" detail without a stylistic slant is closer to
+// how an auditory learner's content should read (explained plainly, as if
+// spoken) than forcing it into a mismatched style.
+const TRACK_TO_EDUPROMPT_STYLE: Partial<Record<string, "activity" | "visual" | "quiz" | "exam" | "mapping">> = {
+  visual: "visual",
+  kinesthetic: "activity",
+  readwrite: "mapping",
+  multimodal: "visual",
+};
+
+export function styleForLearningTrack(primaryTrack?: string): "activity" | "visual" | "quiz" | "exam" | "mapping" | undefined {
+  if (!primaryTrack) return undefined;
+  return TRACK_TO_EDUPROMPT_STYLE[primaryTrack];
+}

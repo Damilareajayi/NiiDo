@@ -2,7 +2,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { TutorAgent } from "../services/agents/TutorAgent";
-import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeLanguage } from "../services/eduprompt";
+import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeLanguage, styleForLearningTrack } from "../services/eduprompt";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole, requirePremium } from "../middleware/auth";
 
@@ -70,7 +70,9 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
         subject:    data.subject,
         grade:      humanizeGrade(grade),
         topic:      data.topic,
-        style:      "activity",
+        // Tailored to how this specific learner actually learns, not a
+        // one-size-fits-all style — see styleForLearningTrack.
+        style:      styleForLearningTrack(profile.primaryTrack),
         detail:     "standard",
         language:   humanizeLanguage(language),
       });
