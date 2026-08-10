@@ -11,6 +11,18 @@ export const metadata: Metadata = {
     "The adaptive learning platform for every learner, everywhere. NiiDo Read, NiiDo Teach, NiiDo Pulse.",
 };
 
+// Next.js's default Cache-Control for prerendered pages assumes a
+// deploy-ID-aware CDN (like Vercel's) that treats a new deploy as an
+// automatic cache miss. Fastly, fronting this app via Firebase Hosting,
+// has no such awareness — it kept serving old cached HTML that referenced
+// JS chunk filenames from a previous build, which the new build no longer
+// has (404), leaving the app stuck on a dead page that never finishes
+// loading. This was fixed per-page for the auth routes earlier, but every
+// other route — including "/", the actual entry point — was still
+// exposed to it. Setting this on the root layout applies it to the whole
+// route tree at once instead of one page at a time.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
