@@ -30,9 +30,14 @@ const LANGUAGES = [
   { code: "id",    label: "Bahasa Indonesia" },
 ];
 
-// A clean, fully custom "Select Language" control — floats bottom-right,
-// a corner nothing else in the app ever occupies, so it never collides with
-// page content. Visually it's entirely ours.
+// A clean, fully custom "Select Language" control that floats bottom-right.
+// On mobile it's icon-only (a compact circular FAB) rather than a wide
+// pill — confirmed via screenshot audit that the full pill can land on top
+// of whatever content happens to be at that corner of the current scroll
+// position (login's module badges, signup's Age/School fields), since a
+// fixed element doesn't know what's underneath it. A small circle can still
+// graze content but can't fully cover a field the way a ~140px pill does.
+// From sm: up there's enough room that the full label is safe to show.
 export function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
   const { lang, setLang } = useLang();
@@ -75,12 +80,13 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 bg-white border border-stone-200 shadow-md rounded-full pl-3 pr-4 py-2.5
+        className="flex items-center justify-center gap-2 bg-white border border-stone-200 shadow-md
+                   w-11 h-11 rounded-full sm:w-auto sm:h-auto sm:pl-3 sm:pr-4 sm:py-2.5
                    text-sm font-medium text-stone-700 hover:shadow-lg transition-shadow"
         aria-label="Select language"
       >
-        <Globe2 className="w-4 h-4 text-brand-500" />
-        {currentLabel}
+        <Globe2 className="w-4 h-4 text-brand-500 shrink-0" />
+        <span className="hidden sm:inline">{currentLabel}</span>
       </button>
     </div>
   );

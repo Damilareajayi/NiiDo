@@ -290,16 +290,39 @@ export const COUNTRIES: { iso: string; name: string; dialCode: string }[] = [
   { iso: "ZW", name: "Zimbabwe", dialCode: "+263" },
 ];
 
+// Fixed values only where NiiDo actually needs to match on a subject (teacher
+// signup's "subjects you teach" tags). The lesson generator itself takes free
+// text (see teach/page.tsx) and uses this same list only as quick-pick
+// suggestions — it is not a ceiling on what can be generated.
 export const SUBJECTS: { value: Subject; label: string }[] = [
   { value: "mathematics",         label: "Mathematics" },
+  { value: "further_mathematics", label: "Further Mathematics" },
   { value: "english",             label: "English" },
+  { value: "literature",          label: "Literature" },
   { value: "basic_science",       label: "Basic Science" },
+  { value: "physics",             label: "Physics" },
+  { value: "chemistry",           label: "Chemistry" },
+  { value: "biology",             label: "Biology" },
   { value: "social_studies",      label: "Social Studies" },
   { value: "civic_education",     label: "Civic Education" },
+  { value: "geography",           label: "Geography" },
+  { value: "history",             label: "History" },
+  { value: "government",          label: "Government" },
+  { value: "economics",           label: "Economics" },
   { value: "agricultural_science", label: "Agricultural Science" },
   { value: "computer_studies",    label: "Computer Studies" },
+  { value: "computer_science",    label: "Computer Science" },
   { value: "business_studies",    label: "Business Studies" },
+  { value: "accounting",          label: "Accounting" },
   { value: "home_economics",      label: "Home Economics" },
   { value: "fine_art",            label: "Fine Art" },
+  { value: "music",               label: "Music" },
   { value: "physical_education",  label: "Physical Education" },
+  { value: "french",              label: "French" },
+  { value: "religious_studies",   label: "Religious Studies" },
+  { value: "psychology",          label: "Psychology" },
+  { value: "engineering",         label: "Engineering" },
+  { value: "medicine",            label: "Medicine" },
+  { value: "law",                 label: "Law" },
+  { value: "nursing",             label: "Nursing" },
 ];

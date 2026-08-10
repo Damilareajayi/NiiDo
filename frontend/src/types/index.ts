@@ -33,18 +33,43 @@ export type LearningTrack =
 
 export type SupportLevel = "none" | "mild" | "moderate" | "significant";
 
+// Used by teacher signup's "subjects you teach" tags and as quick-pick
+// suggestions on the lesson generator (see constants.ts's SUBJECTS) — not a
+// hard restriction on what a lesson can be generated for. The generator
+// itself takes free text (EduPrompt/Gemini can produce a lesson for any
+// subject a teacher types), since NiiDo now spans K-12 through grad school
+// and no fixed list could cover that.
 export type Subject =
   | "mathematics"
   | "english"
   | "basic_science"
+  | "physics"
+  | "chemistry"
+  | "biology"
+  | "further_mathematics"
+  | "literature"
   | "social_studies"
   | "civic_education"
+  | "geography"
+  | "history"
+  | "government"
+  | "economics"
   | "agricultural_science"
   | "computer_studies"
+  | "computer_science"
   | "business_studies"
+  | "accounting"
   | "home_economics"
   | "fine_art"
-  | "physical_education";
+  | "music"
+  | "physical_education"
+  | "french"
+  | "religious_studies"
+  | "psychology"
+  | "engineering"
+  | "medicine"
+  | "law"
+  | "nursing";
 
 export type Grade =
   | "primary_1" | "primary_2" | "primary_3"

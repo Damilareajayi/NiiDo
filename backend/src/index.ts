@@ -31,6 +31,7 @@ app.use(cors({
     "http://127.0.0.1:3000",
     process.env.FRONTEND_URL || "https://niido.learnscape.africa",
     "https://niido.learnscape.africa",
+    "https://www.niido.learnscape.africa",
   ],
   credentials: true,
 }));

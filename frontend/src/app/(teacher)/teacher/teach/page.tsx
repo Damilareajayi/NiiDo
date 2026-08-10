@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { useLang } from "@/hooks/useLang";
 import { apiFetch } from "@/lib/api";
 import { GRADES, SUBJECTS } from "@/lib/constants";
-import { Grade, LessonContent, Subject } from "@/types";
+import { Grade, LessonContent } from "@/types";
 import { FadeIn } from "@/components/ui/FadeIn";
 import { GraduationCap, Loader2, Sparkles } from "lucide-react";
 
@@ -88,7 +88,7 @@ const LANG_MAP: Record<string, string> = {
 export default function TeachPage() {
   const { t, lang } = useLang();
 
-  const [subject, setSubject] = useState<Subject | "">("");
+  const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");
   const [grade, setGrade] = useState<Grade | "">("");
   const [duration, setDuration] = useState<typeof DURATIONS[number]>(45);
@@ -148,17 +148,21 @@ export default function TeachPage() {
           <form className="space-y-5" onSubmit={generate}>
             <div>
               <label className="label">{t.teach.subject}</label>
-              <select
+              <input
+                type="text"
                 className="input"
                 required
+                placeholder="e.g. Mathematics, Organic Chemistry, Constitutional Law..."
+                list="subject-suggestions"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value as Subject)}
-              >
-                <option value="" disabled>—</option>
+                onChange={(e) => setSubject(e.target.value)}
+              />
+              <datalist id="subject-suggestions">
                 {SUBJECTS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.label} />
                 ))}
-              </select>
+              </datalist>
+              <p className="text-xs text-stone-400 mt-1.5">Any subject or discipline — not limited to the suggestions</p>
             </div>
 
             <div>
@@ -173,7 +177,7 @@ export default function TeachPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">{t.teach.grade}</label>
                 <select
@@ -300,7 +304,7 @@ export default function TeachPage() {
                 <div>
                   <p className="text-teal-700 text-sm font-medium">{topic}</p>
                   <h2 className="text-lg font-display font-semibold text-stone-900">
-                    {SUBJECTS.find((s) => s.value === subject)?.label} · {GRADES.find((g) => g.value === grade)?.label} · {duration} {t.teach.minutes}
+                    {subject} · {GRADES.find((g) => g.value === grade)?.label} · {duration} {t.teach.minutes}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <span className="badge-read text-xs font-semibold">{curriculum}</span>
