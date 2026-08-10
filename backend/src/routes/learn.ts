@@ -3,6 +3,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { TutorAgent } from "../services/agents/TutorAgent";
 import { eduPromptConfigured, generateLessonViaEduPrompt, humanizeGrade, humanizeLanguage, styleForLearningTrack } from "../services/eduprompt";
+import { generateLessonIllustration } from "../services/openaiImages";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole, requirePremium } from "../middleware/auth";
 
@@ -101,8 +102,25 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
       contentType = "structured";
     }
 
+    // Allocated up front (not via .add()) so the image, if generated, can be
+    // stored at a path keyed by this content's own ID.
+    const docRef = db.collection("learningContent").doc();
+
+    // An illustration is only generated for learners it actually helps —
+    // visual and multimodal tracks — and never blocks the lesson text if
+    // it fails or isn't configured (see generateLessonIllustration).
+    const imageUrl = ["visual", "multimodal"].includes(profile.primaryTrack)
+      ? await generateLessonIllustration({
+          subject: data.subject,
+          topic: data.topic,
+          gradeLabel: humanizeGrade(grade),
+          studentId,
+          contentId: docRef.id,
+        })
+      : null;
+
     const createdAt = Timestamp.now();
-    const docRef = await db.collection("learningContent").add({
+    await docRef.set({
       studentId,
       schoolId: req.authUser!.schoolId,
       subject: data.subject,
@@ -110,10 +128,16 @@ learnRouter.post("/generate", async (req: Request, res: Response) => {
       sections,
       provider,
       contentType,
+      imageUrl,
       createdAt,
     });
 
-    res.json({ success: true, content: { subject: data.subject, topic: data.topic, sections, provider, contentType }, contentId: docRef.id, createdAt });
+    res.json({
+      success: true,
+      content: { subject: data.subject, topic: data.topic, sections, provider, contentType, imageUrl },
+      contentId: docRef.id,
+      createdAt,
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: err.errors });

@@ -56,4 +56,13 @@ export const db = process.env.FIRESTORE_DATABASE_ID
   ? getFirestore(process.env.FIRESTORE_DATABASE_ID)
   : getFirestore();
 export const Timestamp = admin.firestore.Timestamp;
+// A plain GCS bucket, not Firebase's "default" Storage bucket — this
+// project never had Firebase Storage provisioned at all (no
+// {project}.appspot.com / {project}.firebasestorage.app bucket exists),
+// so admin.storage().bucket() would fail. This bucket was created
+// directly for one purpose — generated learning-content illustrations —
+// with uniform bucket-level access and a bucket-level public-read IAM
+// binding (not per-object ACLs, so file.makePublic() is neither needed
+// nor supported here).
+export const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET || "niido-learning-content");
 export default admin;

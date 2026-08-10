@@ -20,6 +20,8 @@ interface LearningContent {
   subject: string;
   topic: string;
   sections: LearningSection[];
+  // Only generated for visual/multimodal learners — see backend/routes/learn.ts.
+  imageUrl?: string | null;
 }
 
 type Stage = "form" | "loading" | "reading" | "done" | "premium-required" | "error";
@@ -146,9 +148,19 @@ export default function MyLearningPage() {
       ) : content && (stage === "reading" || stage === "done") ? (
         <div>
           <FadeIn>
-            <div className="card p-6 mb-5 border-2 border-brand-200 bg-gradient-to-br from-brand-50 to-white">
-              <p className="text-brand-700 text-sm font-medium">{content.subject}</p>
-              <h2 className="text-lg font-display font-semibold text-stone-900">{content.topic}</h2>
+            <div className="card mb-5 border-2 border-brand-200 overflow-hidden">
+              {content.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={content.imageUrl}
+                  alt={`Illustration for ${content.topic}`}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              <div className="p-6 bg-gradient-to-br from-brand-50 to-white">
+                <p className="text-brand-700 text-sm font-medium">{content.subject}</p>
+                <h2 className="text-lg font-display font-semibold text-stone-900">{content.topic}</h2>
+              </div>
             </div>
           </FadeIn>
 
