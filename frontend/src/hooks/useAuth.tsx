@@ -10,8 +10,7 @@ import {
 } from "react";
 import {
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signInWithPhoneNumber,
   GoogleAuthProvider,
   RecaptchaVerifier,
@@ -44,15 +43,6 @@ interface AuthContextType {
   googleLinkEmail: string | null;
   linkGoogleAccount: (password: string) => Promise<void>;
   cancelGoogleLink: () => void;
-  // Google sign-in uses a full-page redirect (see loginWithGoogle) rather
-  // than a popup — popups are unreliable on mobile browsers, where the
-  // OAuth result can complete with Google but never make it back to the
-  // opener tab, leaving the app looking signed-out. A redirect means the
-  // page fully reloads on return, so "did I just sign in via that redirect"
-  // can't be local component state — it has to live here, resolved once
-  // via getRedirectResult on mount and read by login/signup on their own
-  // mount to seed their justSignedIn flag.
-  justCompletedRedirectSignIn: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,34 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
   const pendingGoogleCredRef = useRef<AuthCredential | null>(null);
   const [googleLinkEmail, setGoogleLinkEmail] = useState<string | null>(null);
-  const [justCompletedRedirectSignIn, setJustCompletedRedirectSignIn] = useState(false);
-
-  useEffect(() => {
-    // Resolves the pending Google redirect, if this page load is the
-    // return trip from one. Safe to call unconditionally on mount — it
-    // resolves to null on any ordinary page load that isn't a redirect
-    // return.
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) setJustCompletedRedirectSignIn(true);
-      })
-      .catch((err: unknown) => {
-        const fbErr = err as AuthError;
-        // Same "one account per email" collision as before — just surfaced
-        // here instead of at the loginWithGoogle call site, since a
-        // redirect flow doesn't have one.
-        if (fbErr.code === "auth/account-exists-with-different-credential") {
-          const pendingCred = GoogleAuthProvider.credentialFromError(fbErr);
-          const email = fbErr.customData?.email as string | undefined;
-          if (pendingCred && email) {
-            pendingGoogleCredRef.current = pendingCred;
-            setGoogleLinkEmail(email);
-            return;
-          }
-        }
-        if (err instanceof Error) setError(err.message);
-      });
-  }, []);
 
   useEffect(() => {
     let unsubscribeDoc: (() => void) | null = null;
@@ -142,20 +104,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = async () => {
     setError(null);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      prompt: "select_account",
-    });
-    // A full-page redirect rather than signInWithPopup — popups depend on
-    // the popup window successfully messaging its opener, which mobile
-    // browsers (and in-app browsers like Instagram/WhatsApp's) frequently
-    // block or silently drop, completing the Google sign-in while the
-    // app itself never finds out and just looks signed-out. Redirect has
-    // no such dependency: the whole tab navigates to Google and back.
-    // The result (success or the account-exists-with-different-credential
-    // collision) is picked up by the getRedirectResult effect above on
-    // the page load this returns to, not here.
-    await signInWithRedirect(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
+      // signInWithPopup, not signInWithRedirect: redirect requires Firebase's
+      // authDomain (learnscape-490110.firebaseapp.com) to relay the result
+      // back to this app's own domain (niido.learnscape.africa) via
+      // cross-domain storage — which those being different origins breaks in
+      // browsers that restrict third-party storage access, and did break it
+      // in practice (account picker completed, but the app never saw a
+      // signed-in user). Popup avoids that entirely: the result comes back
+      // via window.postMessage between the popup and this tab, which works
+      // regardless of the authDomain/app-domain mismatch. The real fix is
+      // completing Firebase's custom auth domain setup for
+      // niido.learnscape.africa (pending, unfinished, requires DNS access);
+      // until then, popup is the reliable option.
+      await signInWithPopup(auth, provider);
+    } catch (err: unknown) {
+      const fbErr = err as AuthError;
+      // "One account per email" (Firebase's default) means an email that
+      // already signed up with a password hits this the moment it tries
+      // Google — the two providers are separate identities until linked.
+      // Capture the pending credential and hand off to linkGoogleAccount().
+      if (fbErr.code === "auth/account-exists-with-different-credential") {
+        const pendingCred = GoogleAuthProvider.credentialFromError(fbErr);
+        const email = fbErr.customData?.email as string | undefined;
+        if (pendingCred && email) {
+          pendingGoogleCredRef.current = pendingCred;
+          setGoogleLinkEmail(email);
+          throw Object.assign(new Error("account-link-required"), { code: "account-link-required" });
+        }
+      }
+      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      setError(msg);
+      throw err;
+    }
   };
 
   // Completes the link started above: verifies the user actually owns the
@@ -225,7 +210,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, firebaseUser, loading, login, loginWithGoogle,
       sendPhoneOtp, confirmPhoneOtp, logout, error,
       googleLinkEmail, linkGoogleAccount, cancelGoogleLink,
-      justCompletedRedirectSignIn,
     }}>
       {children}
     </AuthContext.Provider>
