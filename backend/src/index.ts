@@ -14,6 +14,7 @@ import { adminRouter }  from "./routes/admin";
 import { teacherRouter } from "./routes/teacher";
 import { authRouter }   from "./routes/auth";
 import { learnRouter }  from "./routes/learn";
+import { analyticsRouter } from "./routes/analytics";
 import "./firebase";
 
 const app  = express();
@@ -90,6 +91,7 @@ app.use("/api/admin",    adminRouter);
 app.use("/api/teacher",  teacherRouter);
 app.use("/api/auth",     signupLimiter, authRouter);
 app.use("/api/learn",    aiLimiter, learnRouter);
+app.use("/api/analytics", analyticsRouter);
 
 // ── 404 handler ──────────────────────────────
 app.use((_req, res) => {

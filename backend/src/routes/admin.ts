@@ -1,14 +1,28 @@
 // ── NiiDo Admin Route — teacher & student account management ──
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import admin from "firebase-admin";
 import { db, Timestamp } from "../firebase";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { createStudentAccount, generatePassword } from "../services/accounts";
+import { todayKey } from "./analytics";
 
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole("admin"));
+
+// Platform-wide metrics (below) are NiiDo's own, not any one school's — every
+// other route on this router is scoped to req.authUser.schoolId, which is
+// deliberately wrong for that. Gate it to the platform owner specifically,
+// same email the frontend's Profile Role Switcher already restricts itself to.
+const OWNER_EMAIL = "ajayidamilarefelix@gmail.com";
+
+function requireOwner(req: Request, res: Response, next: NextFunction) {
+  if (req.authUser?.email !== OWNER_EMAIL) {
+    return res.status(403).json({ error: "Owner access only" });
+  }
+  next();
+}
 
 // ── Teachers ────────────────────────────────────────────────
 
@@ -160,5 +174,53 @@ adminRouter.post("/growth-marketing", async (req: Request, res: Response) => {
     }
     console.error(err);
     res.status(500).json({ error: "Failed to generate marketing campaign" });
+  }
+});
+
+// ── Platform dashboard (owner-only) ──────────────────────────
+
+// GET /api/admin/platform-stats
+adminRouter.get("/platform-stats", requireOwner, async (_req: Request, res: Response) => {
+  try {
+    const [usersSnap, studentsSnap, lessonsSnap, schoolsSnap, visitsSnap] = await Promise.all([
+      db.collection("users").get(),
+      db.collection("students").get(),
+      db.collection("lessons").get(),
+      db.collection("schools").get(),
+      db.collection("analyticsDaily").orderBy("date", "desc").limit(14).get(),
+    ]);
+
+    let students = 0, teachers = 0, admins = 0, premium = 0, free = 0;
+    usersSnap.forEach((doc) => {
+      const d = doc.data();
+      if (d.role === "student") students++;
+      if (d.role === "teacher") teachers++;
+      if (d.role === "admin") admins++;
+      if (d.subscriptionTier === "premium") premium++; else free++;
+    });
+
+    const assessmentsCompleted = studentsSnap.docs.filter((d) => !!d.data().readProfile).length;
+
+    const visitsSeries = visitsSnap.docs
+      .map((d) => ({ date: d.id, visits: (d.data().visits as number) || 0 }))
+      .reverse();
+    const today = todayKey();
+    const visitsToday = visitsSeries.find((v) => v.date === today)?.visits || 0;
+    const visitsLast14Days = visitsSeries.reduce((sum, v) => sum + v.visits, 0);
+
+    res.json({
+      totalUsers: usersSnap.size,
+      students,
+      teachers,
+      admins,
+      schools: schoolsSnap.size,
+      lessonsGenerated: lessonsSnap.size,
+      assessmentsCompleted,
+      subscriptions: { free, premium },
+      visits: { today: visitsToday, last14Days: visitsLast14Days, series: visitsSeries },
+    });
+  } catch (err) {
+    console.error("Platform stats error:", err);
+    res.status(500).json({ error: "Failed to load platform stats" });
   }
 });

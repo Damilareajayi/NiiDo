@@ -7,7 +7,7 @@ import { useLang } from "@/hooks/useLang";
 import { useReadProfile } from "@/hooks/useReadProfile";
 import { apiFetch } from "@/lib/api";
 import { AssessmentQuestion, AssessmentResponse, Grade } from "@/types";
-import { ASSESSMENT_GRADES } from "@/lib/constants";
+import { GRADES } from "@/lib/constants";
 import { progressColorAt } from "@/lib/colorGradient";
 import { FadeIn } from "@/components/ui/FadeIn";
 import { AssessmentResultCard } from "@/components/assessment/AssessmentResultCard";
@@ -208,7 +208,7 @@ export function AssessmentFlow({ mode }: { mode: "authenticated" | "public" }) {
                 onChange={(e) => setGrade(e.target.value as Grade | "adult")}
               >
                 <option value="" disabled>—</option>
-                {ASSESSMENT_GRADES.map((g) => (
+                {GRADES.map((g) => (
                   <option key={g.value} value={g.value}>{g.label}</option>
                 ))}
                 <option value="adult">{t.read.gradeAdultOption}</option>

@@ -33,6 +33,13 @@ export default function RootPage() {
     }
   }, [user, loading, router]);
 
+  // Fire-and-forget visit counter for the owner's platform dashboard — every
+  // load of the entry point counts as one visit, signed in or not, same as
+  // standard pageview analytics. Never blocks or surfaces errors to the visitor.
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/pageview`, { method: "POST" }).catch(() => {});
+  }, []);
+
   if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50">

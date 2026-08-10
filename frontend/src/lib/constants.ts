@@ -12,27 +12,15 @@ const HIGHER_ED: { value: Grade; label: string }[] = [
   { value: "grad_phd",      label: "Graduate School, PhD" },
 ];
 
+// One label set used everywhere in the app (signup, complete-profile, admin,
+// teacher tools, assessment) — the generic international "Grade N" numbering,
+// not the Nigerian NERDC names (Primary/JSS/SSS). NiiDo positions itself as a
+// global platform, not Nigeria-only, so the same grade should read the same
+// way no matter which part of the app a user is in. The internal `value`
+// slugs (primary_1, jss_1, sss_1, ...) are unchanged — only the label shown
+// to users changed — since curriculum-aware backend logic (EduPrompt lesson
+// generation) still needs to know this is Nigeria's JSS/SSS system.
 export const GRADES: { value: Grade; label: string }[] = [
-  { value: "primary_1", label: "Primary 1" },
-  { value: "primary_2", label: "Primary 2" },
-  { value: "primary_3", label: "Primary 3" },
-  { value: "primary_4", label: "Primary 4" },
-  { value: "primary_5", label: "Primary 5" },
-  { value: "primary_6", label: "Primary 6" },
-  { value: "jss_1",     label: "JSS 1" },
-  { value: "jss_2",     label: "JSS 2" },
-  { value: "jss_3",     label: "JSS 3" },
-  { value: "sss_1",     label: "SSS 1" },
-  { value: "sss_2",     label: "SSS 2" },
-  { value: "sss_3",     label: "SSS 3" },
-  ...HIGHER_ED,
-];
-
-// Same underlying grades as GRADES, but labeled with the generic international
-// numbering (Primary 1-6 = Grades 1-6, JSS 1-3 = Grades 7-9, SSS 1-3 = Grades 10-12).
-// Used only by the public/global-facing assessment — admin & teacher tools keep the
-// Nigerian names above since that's the real system their students are enrolled in.
-export const ASSESSMENT_GRADES: { value: Grade; label: string }[] = [
   { value: "primary_1", label: "Grade 1" },
   { value: "primary_2", label: "Grade 2" },
   { value: "primary_3", label: "Grade 3" },

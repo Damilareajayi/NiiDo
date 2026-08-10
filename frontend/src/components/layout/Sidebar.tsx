@@ -7,9 +7,15 @@ import { useLang } from "@/hooks/useLang";
 import {
   BookOpen, Brain, GraduationCap, BarChart3,
   Users, LayoutDashboard, Settings, LogOut,
-  Upload, ClipboardList, Menu, X, UserCircle, Sparkles
+  Upload, ClipboardList, Menu, X, UserCircle, Sparkles, Activity
 } from "lucide-react";
 import { useState } from "react";
+
+// Same restriction as the Profile Role Switcher and the platform dashboard
+// page itself — platform-wide data is the owner's to see, not any school
+// admin's, so this link is hidden from everyone else rather than just
+// erroring for them after they click it.
+const OWNER_EMAIL = "ajayidamilarefelix@gmail.com";
 
 interface NavItem {
   href: string;
@@ -46,6 +52,9 @@ export default function Sidebar() {
     { href: "/admin/students",     label: t.nav.students,    icon: ClipboardList },
     { href: "/admin/upload",       label: "Import Students", icon: Upload },
     { href: "/admin/marketing",    label: "Growth & Outreach", icon: Sparkles,        badge: "NiiDo Growth" },
+    ...(user?.email === OWNER_EMAIL
+      ? [{ href: "/admin/platform", label: "Platform Dashboard", icon: Activity }]
+      : []),
   ];
 
   const navItems =
